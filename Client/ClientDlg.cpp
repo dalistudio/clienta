@@ -7,6 +7,7 @@
 #include "ClientDlg.h"
 #include "afxdialogex.h"
 #include "strtoken.h"
+#include "uni2utf8.h"
 #include "../cjson/cJSON.h"
 
 #ifdef _DEBUG
@@ -161,33 +162,38 @@ BOOL CClientDlg::OnInitDialog()
 	conf.com2_id=2;
 	strcpy(conf.com2_para,"baud=9600 parity=N data=8 stop=1");
 	strcpy(conf.cookie,"");
+	strcpy(conf.sid,"");
+	strcpy(conf.aid,"");
 
 	// 打开配置文件 JSON 格式
 	FILE *f=fopen("config","rb"); // 配置文件 config
 	if(f==NULL)
 	{
-		MessageBox("打开配置文件失败！", "config", MB_OK);
+		MessageBox(_T("打开配置文件失败！"), _T("config"), MB_OK);
 	}
-	fseek(f,0,SEEK_END); // 跳到文件尾
-	long len=ftell(f); // 获得文件长度
-	fseek(f,0,SEEK_SET); // 跳到文件头
-	char *data=(char*)malloc(len+1); // 分配文件空间
-	fread(data,1,len,f); // 读取文件数据
-	fclose(f); // 关闭文件
-	cJSON *jsonroot = cJSON_Parse(data); //json根
-	strcpy(conf.title,cJSON_GetObjectItem(jsonroot,"title")->valuestring); // 获得标题
+	else
+	{
+		fseek(f,0,SEEK_END); // 跳到文件尾
+		long len=ftell(f); // 获得文件长度
+		fseek(f,0,SEEK_SET); // 跳到文件头
+		char *data=(char*)malloc(len+1); // 分配文件空间
+		fread(data,1,len,f); // 读取文件数据
+		fclose(f); // 关闭文件
+		cJSON *jsonroot = cJSON_Parse(data); //json根
+		strcpy(conf.title,cJSON_GetObjectItem(jsonroot,"title")->valuestring); // 获得标题
 
-	cJSON *jsonServer=cJSON_GetObjectItem(jsonroot,"server");//取 Server
-	strcpy(conf.ip,cJSON_GetObjectItem(jsonServer,"ip")->valuestring); // 获得IP地址
-	conf.port = cJSON_GetObjectItem(jsonServer,"port")->valueint; // 获得端口
+		cJSON *jsonServer=cJSON_GetObjectItem(jsonroot,"server");//取 Server
+		strcpy(conf.ip,cJSON_GetObjectItem(jsonServer,"ip")->valuestring); // 获得IP地址
+		conf.port = cJSON_GetObjectItem(jsonServer,"port")->valueint; // 获得端口
 
-	cJSON *jsonCOM1=cJSON_GetObjectItem(jsonroot,"com1");//取 COM1
-	conf.com1_id = cJSON_GetObjectItem(jsonCOM1,"port")->valueint; // 获得COM端口
-	strcpy(conf.com1_para,cJSON_GetObjectItem(jsonCOM1,"para")->valuestring); // 获得COM的属性
+		cJSON *jsonCOM1=cJSON_GetObjectItem(jsonroot,"com1");//取 COM1
+		conf.com1_id = cJSON_GetObjectItem(jsonCOM1,"port")->valueint; // 获得COM端口
+		strcpy(conf.com1_para,cJSON_GetObjectItem(jsonCOM1,"para")->valuestring); // 获得COM的属性
 
-	cJSON *jsonCOM2=cJSON_GetObjectItem(jsonroot,"com1");//取 COM1
-	conf.com2_id = cJSON_GetObjectItem(jsonCOM2,"port")->valueint; // 获得COM端口
-	strcpy(conf.com2_para,cJSON_GetObjectItem(jsonCOM2,"para")->valuestring); // 获得COM的属性
+		cJSON *jsonCOM2=cJSON_GetObjectItem(jsonroot,"com1");//取 COM1
+		conf.com2_id = cJSON_GetObjectItem(jsonCOM2,"port")->valueint; // 获得COM端口
+		strcpy(conf.com2_para,cJSON_GetObjectItem(jsonCOM2,"para")->valuestring); // 获得COM的属性
+	}
 
 	// 设置定时器
 	SetTimer(1,20000,0); // 20秒
@@ -216,12 +222,13 @@ BOOL CClientDlg::OnInitDialog()
 		CLIP_DEFAULT_PRECIS,	// 字符的裁剪精度
 		DEFAULT_QUALITY,		// 字符的输出质量
 		FF_SWISS,				// 字符间距和字体族
-		"隶书");				// 字体名称
+		_T("隶书"));				// 字体名称
 	// 重量
 	GetDlgItem(IDC_EDIT_ZHONGLIANG)->SetFont(m_Font);
 
 	// 标题
-	GetDlgItem(IDC_EDIT_TITLE)->SetWindowText(conf.title);
+	USES_CONVERSION;  // dali
+	GetDlgItem(IDC_EDIT_TITLE)->SetWindowText(A2CW(conf.title));
 	GetDlgItem(IDC_EDIT_TITLE)->SetFont(m_Font);
 	//////////////////////////////////////
 
@@ -290,27 +297,27 @@ BOOL CClientDlg::OnInitDialog()
 
 	/////////////////////////////////
 
-	m_chexing.AddString("大车");
-	m_chexing.AddString("小车");
+	m_chexing.AddString(_T("大车"));
+	m_chexing.AddString(_T("小车"));
 	m_chexing.SetCurSel(0); // 选择第一项“大车”
 
-	m_huowu.AddString("青石");
-	m_huowu.AddString("半青石");
-	m_huowu.AddString("石粉");
-	m_huowu.AddString("混合");
-	m_huowu.AddString("峰石");
-	m_huowu.AddString("片石");
+	m_huowu.AddString(_T("青石"));
+	m_huowu.AddString(_T("半青石"));
+	m_huowu.AddString(_T("石粉"));
+	m_huowu.AddString(_T("混合"));
+	m_huowu.AddString(_T("峰石"));
+	m_huowu.AddString(_T("片石"));
 	m_huowu.SetCurSel(0);
 
-	m_guige.AddString("0.5");
-	m_guige.AddString("1.2");
-	m_guige.AddString("1.3");
-	m_guige.AddString("1.45");
-	m_guige.AddString("1.55");
-	m_guige.AddString("2.4");
+	m_guige.AddString(_T("0.5"));
+	m_guige.AddString(_T("1.2"));
+	m_guige.AddString(_T("1.3"));
+	m_guige.AddString(_T("1.45"));
+	m_guige.AddString(_T("1.55"));
+	m_guige.AddString(_T("2.4"));
 
-	m_liuxiang.AddString("提货");
-	m_liuxiang.AddString("出厂");
+	m_liuxiang.AddString(_T("提货"));
+	m_liuxiang.AddString(_T("出厂"));
 
 
 	//return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -404,15 +411,15 @@ void CClientDlg::OnBnClickedButtonCom1Send()
 {
 	// TODO: 在此添加控件通知处理程序代码
 //	com1.write("COM1-test");
-	CString strEdit("");
-	GetDlgItem(IDC_EDIT_CHEHAO)->GetWindowText(strEdit);
-	if (strEdit.IsEmpty())
-	{
-		return;
-	}
-	char SendBuf[512] = {0};
-	strcpy(SendBuf,strEdit);
-	m_Conn.Send(SendBuf,strlen(SendBuf));
+//	CString strEdit("");
+//	GetDlgItem(IDC_EDIT_CHEHAO)->GetWindowText(strEdit);
+//	if (strEdit.IsEmpty())
+//	{
+//		return;
+//	}
+//	char SendBuf[512] = {0};
+//	strcpy(SendBuf,strEdit);
+//	m_Conn.Send(SendBuf,strlen(SendBuf));
 }
 
 
@@ -425,12 +432,13 @@ void CClientDlg::OnBnClickedButtonCom2Send()
 // 连接网络
 void CClientDlg::OnConnected()
 {
-	m_ip.SetWindowText(conf.ip);
+	USES_CONVERSION;  // dali
+	m_ip.SetWindowText(A2CW(conf.ip));
 	char tmp[16]={0};
 	sprintf(tmp,"%d",conf.port);
-	m_port.SetWindowText(tmp);
+	m_port.SetWindowText(A2CW(tmp));
 	printf("连接服务器成功\n");
-	m_btn_net.SetWindowText("连接成功");
+	m_btn_net.SetWindowText(_T("连接成功"));
 	m_btn_net.EnableWindow(FALSE);
 	//MessageBox("连接成功");
 }
@@ -447,7 +455,8 @@ void CClientDlg::OnRvc()
 	if (SOCKET_ERROR != m_net_rvc_len)
 	{
 		printf("%s\n",m_net_rvc_data);
-		GetDlgItem(IDC_EDIT_INFO)->SetWindowText(m_net_rvc_data);
+		USES_CONVERSION;  // dali
+		GetDlgItem(IDC_EDIT_INFO)->SetWindowText(A2CW(m_net_rvc_data));
 		switch(m_post_id)
 		{
 		case 1:
@@ -474,6 +483,7 @@ void CClientDlg::GetData(char *url, char *para)
 	char Data[1024] = {0};
 	strcat(Data,"GET ");
 	strcat(Data,url);
+	strcat(Data,"?");
 	strcat(Data,para);
 	strcat(Data," HTTP/1.1\r\n");
 	strcat(Data,"Host: ");
@@ -483,11 +493,15 @@ void CClientDlg::GetData(char *url, char *para)
 	strcat(Data,"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n");
 	strcat(Data,"User-Agent: Mozilla/5.0 (Windows Client; Dali Wang<wangdali@qq.com>)\r\n");
 	strcat(Data,"Accept-Language: zh-CN,zh;q=0.8\r\n");
-	strcat(Data,"Cookie: ");
-	strcat(Data,conf.cookie);
-	strcat(Data,"\r\n");
+	if(strcmp(conf.cookie,"")!=0)
+	{
+		strcat(Data,"Cookie: ");
+		strcat(Data,conf.cookie);
+		strcat(Data,"\r\n");
+	}
 	strcat(Data,"\r\n");
 	m_Conn.Send(Data,strlen(Data));
+	printf("%s\n",Data);
 }
 
 void CClientDlg::PostData(char *url, char *para)
@@ -503,9 +517,12 @@ void CClientDlg::PostData(char *url, char *para)
 	strcat(Data,"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n");
 	strcat(Data,"User-Agent: Mozilla/5.0 (Windows Client; Dali Wang<wangdali@qq.com>)\r\n");
 	strcat(Data,"Accept-Language: zh-CN,zh;q=0.8\r\n");
-	strcat(Data,"Cookie: ");
-	strcat(Data,conf.cookie);
-	strcat(Data,"\r\n");
+	if(strcmp(conf.cookie,"")!=0)
+	{
+		strcat(Data,"Cookie: ");
+		strcat(Data,conf.cookie);
+		strcat(Data,"\r\n");
+	}
 	strcat(Data,"Content-Type: application/x-www-form-urlencoded\r\n");
 	strcat(Data,"Content-Length: ");
 	char tmp[16] = {0};
@@ -515,6 +532,7 @@ void CClientDlg::PostData(char *url, char *para)
 	strcat(Data,"\r\n");
 	strcat(Data,para);
 	m_Conn.Send(Data,strlen(Data));
+	printf("%s\n",Data);
 }
 
 BOOL CClientDlg::PreTranslateMessage(MSG* pMsg)
@@ -533,8 +551,8 @@ BOOL CClientDlg::PreTranslateMessage(MSG* pMsg)
 			CWnd *wnd =GetFocus();
 			if(wnd != NULL)
 			{
-				char str[256];
-				CString ClassName = "Button";
+				TCHAR str[256];
+				CString ClassName = _T("Button");
 				GetClassName(wnd->m_hWnd,str,256);
 				UINT i = wnd->GetDlgCtrlID();
 				if(ClassName == str)
@@ -560,7 +578,7 @@ BOOL CClientDlg::PreTranslateMessage(MSG* pMsg)
 		switch(pMsg->wParam)
 		{
 		case VK_F4: // ALT + F4按键 通常用来退出程序
-			MessageBox("F4");
+			MessageBox(_T("F4"));
 			return TRUE; // 跳出，不执行退出程序
 		}
 	}
@@ -579,9 +597,10 @@ void CClientDlg::OnBnClickedButtonNetConn()
 	}
 	else
 	{
-		MessageBox("创建Socket失败！");
+		MessageBox(_T("创建Socket失败！"));
 	}
-	m_Conn.Connect(conf.ip,conf.port);
+	USES_CONVERSION;  // dali
+	m_Conn.Connect(A2CW(conf.ip),conf.port);
 }
 
 // 重新打开串口
@@ -591,7 +610,7 @@ void CClientDlg::OnBnClickedButtonComConn()
 	// 初始化串口
 	if(!com1.open(conf.com1_id,conf.com1_para))
 	{
-		m_com1.SetWindowText("打开失败");
+		m_com1.SetWindowText(_T("打开失败"));
 //		MessageBox("串口1打开失败", "串口", MB_OK);
 	}
 	else
@@ -599,12 +618,13 @@ void CClientDlg::OnBnClickedButtonComConn()
 		com1.set_hwnd(m_hWnd);
 		char tmp[64] = {0};
 		sprintf(tmp,"COM%d:%s",conf.com1_id,conf.com1_para);
-		m_com1.SetWindowText(tmp);
+		USES_CONVERSION;  // dali
+		m_com1.SetWindowText(A2CW(tmp));
 	}
 
 	if(!com2.open(conf.com2_id,conf.com2_para))
 	{
-		m_com2.SetWindowText("打开失败");
+		m_com2.SetWindowText(_T("打开失败"));
 //		MessageBox("串口2打开失败", "串口", MB_OK);
 	}
 	else
@@ -612,7 +632,8 @@ void CClientDlg::OnBnClickedButtonComConn()
 		com2.set_hwnd(m_hWnd);
 		char tmp[64] = {0};
 		sprintf(tmp,"COM%d,%s",conf.com2_id,conf.com2_para);
-		m_com2.SetWindowText(tmp);
+		USES_CONVERSION;  // dali
+		m_com2.SetWindowText(A2CW(tmp));
 	}
 }
 
@@ -622,14 +643,17 @@ void CClientDlg::OnBnClickedButtonLogin()
 	// TODO: 在此添加控件通知处理程序代码
 	m_post_id = 2; // 提交ID为2
 	char Data[256] ={0};
-	strcat(Data,"?name=");
-	CString strUser ="";
+	strcat(Data,"User=");
+	CString strUser =_T("");
 	m_user.GetWindowText(strUser);
-	strcat(Data,strUser.GetBuffer());
-	strcat(Data,"&pwd=");
-	CString strPwd = "";
+	//strcat(Data,strUser.GetBuffer());
+	strcat(Data,"123");
+	strcat(Data,"&Passwd=");
+	CString strPwd = _T("");
 	m_pwd.GetWindowText(strPwd);
-	strcat(Data,strPwd.GetBuffer());
+	//strcat(Data,strPwd.GetBuffer());
+	strcat(Data,"456");
+	strcat(Data,"&Level=1");
 	GetData("/login.php",(char*)&Data);
 }
 
@@ -637,9 +661,9 @@ void CClientDlg::OnBnClickedButtonLogin()
 void CClientDlg::OnBnClickedButtonLogout()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	m_user.SetWindowText("");
+	m_user.SetWindowText(_T(""));
 	m_user.EnableWindow(TRUE);
-	m_pwd.SetWindowText("");
+	m_pwd.SetWindowText(_T(""));
 	m_pwd.EnableWindow(TRUE);
 	m_btn_login.EnableWindow(TRUE);
 	memset(&(conf.cookie),0,256);
@@ -658,7 +682,8 @@ void CClientDlg::OnLogin()
 	TOKEN * t = (TOKEN *)malloc(sizeof(TOKEN));
 	TOKEN * l = (TOKEN *)malloc(sizeof(TOKEN));
 	TOKEN * c = (TOKEN *)malloc(sizeof(TOKEN));
-	char *tStr ,*lStr, *cStr;
+	TOKEN * a = (TOKEN *)malloc(sizeof(TOKEN));
+	char *tStr ,*lStr, *cStr, *aStr;
 	tStr = strtoken(t,(char*)&m_net_rvc_data,"\r\n");
 	lStr = strtoken(l,(char*)tStr," "); // HTTP/1.1
 	lStr = strtoken(l,NULL," "); // 200 
@@ -670,14 +695,32 @@ void CClientDlg::OnLogin()
 			cStr = strtoken(c,tStr,":");
 			if(strcmp(cStr,"Set-Cookie")==0)
 			{
+				// 这里应该判断是否存在“AID”身份标识，
+				// 存在则登录成功，否则登录失败。
 				cStr = strtoken(c,NULL,":");
-				strcpy(conf.cookie,cStr);
-				m_user.EnableWindow(FALSE);
-				m_pwd.EnableWindow(FALSE);
-				m_btn_login.EnableWindow(FALSE);
+				aStr = strtoken(a,cStr,"=");
+				if(strcmp(aStr," PHPSESSID")==0) // 会话ID
+				{
+					strcpy(conf.sid,cStr); // 设置SID的值
+				}
+
+				if(strcmp(aStr," AID")==0) // 身份ID
+				{
+					strcpy(conf.aid,cStr); // 设置AID的值
+				}
+
+				if(strcmp(conf.sid,"") > 0 && strcmp(conf.aid,"")>0)
+				{
+					strcpy(conf.cookie,conf.sid); // 设置Cookie的值
+					strcat(conf.cookie,";");
+					strcat(conf.cookie,conf.aid);
+					m_user.EnableWindow(FALSE); // 禁用用户输入框
+					m_pwd.EnableWindow(FALSE);  // 禁用密码输入框 
+					m_btn_login.EnableWindow(FALSE); // 禁用登录按钮
+				}
+				
 			}
 		}
-		
 	}
 }
 
@@ -704,25 +747,26 @@ void CClientDlg::OnPost()
 				break;
 			}
 		}
+		USES_CONVERSION;  // dali
 		cJSON *jsonroot = cJSON_Parse(tStr); //json根
-		m_chehao.SetWindowText(cJSON_GetObjectItem(jsonroot,"ch")->valuestring);
-		m_dianhua.SetWindowText(cJSON_GetObjectItem(jsonroot,"dh")->valuestring);
-		m_shouhuo.SetWindowText(cJSON_GetObjectItem(jsonroot,"dw")->valuestring);
-		m_huowu.SetWindowText(cJSON_GetObjectItem(jsonroot,"hw")->valuestring);
-		m_guige.SetWindowText(cJSON_GetObjectItem(jsonroot,"gg")->valuestring);
-		m_liuxiang.SetWindowText(cJSON_GetObjectItem(jsonroot,"lx")->valuestring);
-		m_chexing.SetWindowText(cJSON_GetObjectItem(jsonroot,"cx")->valuestring);
-		m_pizhong.SetWindowText(cJSON_GetObjectItem(jsonroot,"pz")->valuestring);
-		m_maozhong.SetWindowText(cJSON_GetObjectItem(jsonroot,"mz")->valuestring);
-		m_jingzhong.SetWindowText(cJSON_GetObjectItem(jsonroot,"jz")->valuestring);
-		m_danjia.SetWindowText(cJSON_GetObjectItem(jsonroot,"dj")->valuestring);
-		m_jine.SetWindowText(cJSON_GetObjectItem(jsonroot,"je")->valuestring);
+		m_chehao.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"ch")->valuestring)));
+		m_dianhua.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"dh")->valuestring));
+		m_shouhuo.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dw")->valuestring)));
+		m_huowu.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"hw")->valuestring)));
+		m_guige.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"gg")->valuestring));
+		m_liuxiang.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"lx")->valuestring)));
+		m_chexing.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"cx")->valuestring)));
+		m_pizhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"pz")->valuestring));
+		m_maozhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"mz")->valuestring));
+		m_jingzhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"jz")->valuestring));
+		m_danjia.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"dj")->valuestring));
+		m_jine.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"je")->valuestring));
 		
 	}
 	if(strcmp(lStr,"400")==0)
-		MessageBox("文件没有找到！","网络连接");
+		MessageBox(_T("文件没有找到！"),_T("网络连接"));
 	if(strcmp(lStr,"500")==0)
-		MessageBox("服务器错误！！！","网络连接");
+		MessageBox(_T("服务器错误！！！"),_T("网络连接"));
 
 }
 
@@ -747,18 +791,18 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	// 
 	CString strId;
 	m_id.GetWindowText(strId);
-	if(strcmp(strId,"")==0)
-	{
+//	if(strcmp(strId.GetBuffer(),"")==0)
+//	{
 		// 第一次提交
-		m_post_id = 3; // 提交ID为3
-		PostData("/post.php",""); // 获得一个新的单号
-		m_tijiao.SetFocus(); // 设置单号为焦点
-	}
-	else
+//		m_post_id = 3; // 提交ID为3
+//		GetData("/getid.php","id=0"); // 获得一个新的单号
+//		m_tijiao.SetFocus(); // 设置单号为焦点
+//	}
+//	else
 	{
 		// 第二次提交
-		m_post_id = 4; // 提交ID为4
-		PostData("/post.php",""); // 提交放行请求
+		m_post_id = 3; // 提交ID为4
+		GetData("/getid.php","id=1"); // 提交放行请求
 		m_dayin.SetFocus(); // 设置打印为焦点
 	}
 }
@@ -768,18 +812,18 @@ void CClientDlg::OnBnClickedButtonDayin()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	// 清空文本框的数据，并将焦点设置在单号处。
-	m_id.SetWindowText(""); // 单号
-	m_chehao.SetWindowText(""); // 车号
-	m_dianhua.SetWindowText(""); // 电话
-	m_shouhuo.SetWindowText(""); // 收货单位
-	m_huowu.SetWindowText(""); // 货物名称
-	m_guige.SetWindowText(""); // 货物规格
-	m_liuxiang.SetWindowText(""); // 货物流向
-	m_chexing.SetWindowText(""); // 车型
-	m_pizhong.SetWindowText(""); // 皮重
-	m_maozhong.SetWindowText(""); // 毛重
-	m_jingzhong.SetWindowText(""); // 净重
-	m_danjia.SetWindowText(""); // 单价
-	m_jine.SetWindowText(""); // 金额
+	m_id.SetWindowText(_T("")); // 单号
+	m_chehao.SetWindowText(_T("")); // 车号
+	m_dianhua.SetWindowText(_T("")); // 电话
+	m_shouhuo.SetWindowText(_T("")); // 收货单位
+	m_huowu.SetWindowText(_T("")); // 货物名称
+	m_guige.SetWindowText(_T("")); // 货物规格
+	m_liuxiang.SetWindowText(_T("")); // 货物流向
+	m_chexing.SetWindowText(_T("")); // 车型
+	m_pizhong.SetWindowText(_T("")); // 皮重
+	m_maozhong.SetWindowText(_T("")); // 毛重
+	m_jingzhong.SetWindowText(_T("")); // 净重
+	m_danjia.SetWindowText(_T("")); // 单价
+	m_jine.SetWindowText(_T("")); // 金额
 	m_id.SetFocus();
 }
