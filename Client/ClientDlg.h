@@ -4,9 +4,13 @@
 
 #pragma once
 #include "afxwin.h"
+#include "afxcmn.h"
+#include <memory>
 #include "Com_class.h"
 #include "io.h"
 #include "MySock.h"
+#include "printer.h"
+#include "Resource.h"
 
 // CClientDlg 对话框
 class CClientDlg : public CDialogEx
@@ -39,7 +43,27 @@ public:
 		char sid[256]; // 会话ID
 		char aid[256]; // 身份ID
 	};
-	CONF conf;
+
+	struct DAYIN{
+		CString m_title; // 标题
+		CString m_id; // 单号
+		CString m_CheHao; // 车号
+		CString m_CheXing; // 车型
+		CString m_DanWei; // 收货单位
+		CString m_DianHua; // 电话
+		CString m_HuoWu; // 货物名称
+		CString m_GuiGe; // 货物规格
+		CString m_LiuXiang; // 货物流向
+		CString m_PiZhong; // 皮重
+		CString m_MaoZhong; // 毛重
+		CString m_JingZhong; // 净重
+		CString m_DanJia; // 单价
+		CString m_JinE; // 金额
+		CString m_ChuChang; // 出厂时间
+		CString m_User; // 司磅员
+	};
+	DAYIN DaYin;
+	
 	int len;
 	int m_post_id; // 提交的编号，用于区分不同提交。
 	char m_net_rvc_data[1025]; // 接收到的数据
@@ -59,6 +83,10 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+	unsigned char m_Weight[16]; // 重量的全局变量
+	int m_type; // 第一次或第二次过磅的类型 1为第一次 2位第二次
+
+	CONF conf;
 	// 车型
 	CComboBox m_chexing;
 	// 货物
@@ -99,10 +127,27 @@ public:
 	afx_msg void OnBnClickedButtonLogout();
 	void OnKeepalive(); // 保持连接
 	void OnLogin(); // 用户登录
-	void OnPost(); // 提交单据
+	void OnGet1(); // 第一次获得ID
+	void OnGet2(); // 第二次获得ID
+	void OnPost1(); // 第一次提交表单
+	void OnPost2(); // 第二次提交表单
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnBnClickedButtonTijiao();
 	CButton m_dayin;
 	afx_msg void OnBnClickedButtonDayin();
 	CButton m_tijiao;
+	void SetWindow();
+	void GetWindow();
+	afx_msg void OnBnClickedButtonGet();
+	afx_msg void OnBnClickedButtonEdit();
+
+	// 打印相关
+	LRESULT OnBeginPrinting(WPARAM wParam,LPARAM lParam);
+	LRESULT OnEndPrinting(WPARAM wParam,LPARAM lParam);
+	LRESULT OnMyPrint(WPARAM wParam,LPARAM lParam);//真正打印内容
+	void DoPrint();
+	std::tr1::shared_ptr<CPrinter> m_printer;
+	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
+	afx_msg void OnBnClickedButtonFind();
+	afx_msg void OnBnClickedButtonJiaojie();
 };
