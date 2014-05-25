@@ -526,13 +526,13 @@ void CClientDlg::OnRvc()
 		case 3: // 获得新的账单号
 			OnGet1();
 			break;
-		case 4: // 提交第一次过磅单和第二次过磅单
+		case 4: // 提交第一次过磅单
 			OnPost1();
 			break;
 		case 5: // 获得第一次过磅的数据，即第二次过磅
 			OnGet2();
 			break;
-		case 6: // 无用
+		case 6: // 第二次过磅单
 			OnPost2();
 			break;
 		}
@@ -829,14 +829,21 @@ void CClientDlg::OnGet1()
 				break;
 			}
 		}
+		if(strcmp(tStr,"")==0) // 如果返回的数据为空
+		{
+			MessageBox(L"无可用的单号!!!",L"数据库");
+		}
+		else
+		{
+			USES_CONVERSION;  // dali
+			cJSON *jsonroot = cJSON_Parse(tStr); //json根
+			m_id.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"id")->valuestring)); // 设置“单号”
+			m_id.EnableWindow(FALSE); // 禁止“单号”对话框
+			m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
+			m_chehao.SetFocus(); // 设置车号为焦点
+		}
+		
 	}
-
-	USES_CONVERSION;  // dali
-	cJSON *jsonroot = cJSON_Parse(tStr); //json根
-	m_id.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"id")->valuestring)); // 设置“单号”
-	m_id.EnableWindow(FALSE); // 禁止“单号”对话框
-	m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
-	m_chehao.SetFocus(); // 设置车号为焦点
 }
 
 // 根据单号，请求单据信息
@@ -870,21 +877,46 @@ void CClientDlg::OnGet2()
 				break;
 			}
 		}
-		USES_CONVERSION;  // dali
-		cJSON *jsonroot = cJSON_Parse(tStr); //json根
-		m_chehao.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"ch")->valuestring))); // 车号
-		m_dianhua.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"dh")->valuestring)); // 电话
-		m_shouhuo.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dw")->valuestring))); // 单位
-		m_huowu.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"hw")->valuestring))); // 货物
-		m_guige.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"gg")->valuestring)); // 规格
-		m_liuxiang.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"lx")->valuestring))); // 流向。这个可以删除
-		m_chexing.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"cx")->valuestring))); // 车型
-		m_pizhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"pz")->valuestring)); // 皮重
-		m_maozhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"mz")->valuestring)); // 毛重
-		m_jingzhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"jz")->valuestring)); // 净重
-		m_danjia.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dj")->valuestring))); // 单价
-		m_jine.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"je")->valuestring))); // 金额
-		
+		if(strcmp(tStr,"")==0) // 如果返回的数据为空
+		{
+			MessageBox(L"单号不存在!",L"数据库");
+			SetWindow(); // 禁用所有控件
+			m_id.EnableWindow(TRUE); // 启用单号控件
+
+			m_id.SetWindowText(_T("")); // 单号
+			m_chehao.SetWindowText(_T("")); // 车号
+			m_dianhua.SetWindowText(_T("")); // 电话
+			m_shouhuo.SetWindowText(_T("")); // 收货单位
+			m_huowu.SetWindowText(_T("")); // 货物名称
+			m_guige.SetWindowText(_T("")); // 货物规格
+			m_liuxiang.SetWindowText(_T("")); // 货物流向
+			m_chexing.SetWindowText(_T("")); // 车型
+			m_pizhong.SetWindowText(_T("")); // 皮重
+			m_maozhong.SetWindowText(_T("")); // 毛重
+			m_jingzhong.SetWindowText(_T("")); // 净重
+			m_danjia.SetWindowText(_T("")); // 单价
+			m_jine.SetWindowText(_T("")); // 金额
+
+			m_dayin.EnableWindow(FALSE); // 禁用“打印”按钮
+			m_id.SetFocus();
+		}
+		else
+		{
+			USES_CONVERSION;  // dali
+			cJSON *jsonroot = cJSON_Parse(tStr); //json根
+			m_chehao.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"ch")->valuestring))); // 车号
+			m_dianhua.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"dh")->valuestring)); // 电话
+			m_shouhuo.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dw")->valuestring))); // 单位
+			m_huowu.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"hw")->valuestring))); // 货物
+			m_guige.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"gg")->valuestring)); // 规格
+			m_liuxiang.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"lx")->valuestring))); // 流向。这个可以删除
+			m_chexing.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"cx")->valuestring))); // 车型
+			m_pizhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"pz")->valuestring)); // 皮重
+			m_maozhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"mz")->valuestring)); // 毛重
+			m_jingzhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"jz")->valuestring)); // 净重
+			m_danjia.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dj")->valuestring))); // 单价
+			m_jine.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"je")->valuestring))); // 金额
+		}
 	}
 	if(strcmp(lStr,"400")==0)
 		MessageBox(_T("文件没有找到！"),_T("网络连接"));
@@ -898,6 +930,7 @@ void CClientDlg::OnGet2()
 // 第一次提交单据
 void CClientDlg::OnPost1()
 {
+//	MessageBox(L"第一次过磅");
 	// 判断第一次提交是否正确
 	// 如果正确就跳转到“打印”按钮
 	m_dayin.EnableWindow(TRUE); // 启用“打印”按钮
@@ -908,9 +941,12 @@ void CClientDlg::OnPost1()
 // 第二次提交单据
 void CClientDlg::OnPost2()
 {
+//	MessageBox(L"第二次过磅");
 	// 判断第二次提交是否正确
 	// 如果正确就跳转到“打印”按钮
-
+	m_dayin.EnableWindow(TRUE); // 启用“打印”按钮
+	m_tijiao.EnableWindow(FALSE); // 禁用“提交”按钮
+	m_dayin.SetFocus();
 }
 
 // 定时器
@@ -934,8 +970,55 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	// 第一次提交：m_post_id = 4; 
 	// 第二次提交：m_post_id = 6; 
 	// 需要判断是第一次提交还是第二次提交
-	m_post_id = 4;
-	PostData("/post.php","");
+	
+
+	USES_CONVERSION;
+
+	CString strDanHao,strCheHao,strCheXing; // 单号，车号，车型
+	CString strDanWei,strDianHua; // 单位，电话
+	CString strHuoWu,strGuiGe; // 货物，规格
+	CString strPiZhong,strMaoZhong,strJingZhong; // 皮重，毛重，净重
+	CString strDanJia,strJinE; // 单价，金额
+
+	m_id.GetWindowText(strDanHao); // 单号
+	m_chehao.GetWindowText(strCheHao); // 车号
+	m_chexing.GetWindowText(strCheXing); // 车型
+	m_shouhuo.GetWindowText(strDanWei); // 单位
+	m_dianhua.GetWindowText(strDianHua); // 电话
+	m_huowu.GetWindowText(strHuoWu); // 货物
+	m_guige.GetWindowText(strGuiGe); // 规格
+	m_pizhong.GetWindowText(strPiZhong); // 皮重
+	m_maozhong.GetWindowText(strMaoZhong); // 毛重
+	m_jingzhong.GetWindowText(strJingZhong); // 净重
+	m_danjia.GetWindowText(strDanJia); // 单价
+	m_jine.GetWindowText(strJinE); // 金额
+
+	// 如果毛重为空，表示第一次提交
+	if(strMaoZhong.IsEmpty())
+	{
+		if(strPiZhong.IsEmpty()) // 如果皮重为空
+		{
+			MessageBox(L"\"皮重\"不能为空，检查地磅线路等是否正常！",L"地磅");
+			return;
+		}
+		else
+		{
+			m_post_id = 4; // 第一次提交
+		}
+		
+	}
+	else // 第二次提交
+	{
+		m_post_id = 6;
+	}
+
+	char str[1024]={0};
+	sprintf(str,"DanHao=%s&CheHao=%s&CheXing=%s&",W2A(strDanHao),W2A(strCheHao),W2A(strCheXing));
+	sprintf(str,"%sDanWei=%s&DianHua=%s&",str,W2A(strDanWei),W2A(strDianHua));
+	sprintf(str,"%sHuoWu=%s&GuiGe=%s&",str,W2A(strHuoWu),W2A(strGuiGe));
+	sprintf(str,"%sPiZhong=%s&MaoZhong=%s&JiangZhong=%s&",str,W2A(strPiZhong),W2A(strMaoZhong),W2A(strJingZhong));
+	sprintf(str,"%sDanJia=%s&JinE=%s&ZhuangTai=%d",str,W2A(strDanJia),W2A(strJinE),m_post_id);
+	PostData("/post.php",str);
 
 }
 
@@ -1026,23 +1109,42 @@ void CClientDlg::GetWindow()
 void CClientDlg::OnBnClickedButtonGet()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	char str[32]={0};
+	sprintf(str,"date=%4d%02d%02d&id=",st.wYear,st.wMonth,st.wDay); // 当前日期
+
 	CString strId;
 	m_id.GetWindowText(strId);
+
 	if(strId.IsEmpty()) // 判断“单号”是否为空
 	{
 		// 获取单号
 		m_post_id = 3; // 提交ID为3
 		m_type = 1;
-		GetData("/getid.php","id=0"); // 获得一个新的单号
+		strcat(str,"0");
+		GetData("/getid.php",str); // 获得一个新的单号
 
 		m_tijiao.SetFocus(); // 设置单号为焦点
 	}
 	else
 	{
+		int i = _ttoi(strId); 
+		if(i==0)
+		{
+			MessageBox(L"单号不能全为：0");
+			return;
+		}
+
 		// 根据单号获取单据信息
 		m_post_id = 5; // 提交ID为5
 		m_type = 2;
-		GetData("/getid.php","id=1"); // 提交放行请求
+		// 这里需要生成当前的日期和获得单号
+		CString id=L"";
+		m_id.GetWindowText(id);
+		USES_CONVERSION;
+		strcat(str,W2A(id));
+		GetData("/getid.php",str); // 提交放行请求
 		m_tijiao.SetFocus(); // 设置单号为焦点
 	}
 }

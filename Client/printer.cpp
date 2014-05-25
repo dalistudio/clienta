@@ -165,35 +165,35 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(395,207,m_CheHao);
 
 		m_dc->TextOut(730,207,CString("皮重"));
-		m_dc->TextOut(1065,207,m_PiZhong);
+		m_dc->TextOut(1065,207,m_PiZhong+L" KG");
 
 		// 第二行
 		m_dc->TextOut(80,207+40,CString("车型"));
 		m_dc->TextOut(395,207+40,m_CheXing);
 
 		m_dc->TextOut(730,207+40,CString("毛重"));
-		m_dc->TextOut(1065,207+40,m_MaoZhong);
+		m_dc->TextOut(1065,207+40,m_MaoZhong+L" KG");
 
 		// 第三行
 		m_dc->TextOut(80,207+80,CString("收货单位"));
 		m_dc->TextOut(395,207+80,m_DanWei);
 
 		m_dc->TextOut(730,207+80,CString("净重"));
-		m_dc->TextOut(1065,207+80,m_JingZhong);
+		m_dc->TextOut(1065,207+80,m_JingZhong+L" KG");
 
 		// 第四行
 		m_dc->TextOut(80,207+120,CString("货物名称"));
 		m_dc->TextOut(395,207+120,m_HuoWu);
 
 		m_dc->TextOut(730,207+120,CString("单价"));
-		m_dc->TextOut(1065,207+120,m_DanJia);
+		m_dc->TextOut(1065,207+120,m_DanJia+L" 元");
 
 		// 第五行
 		m_dc->TextOut(80,207+160,CString("货物规格"));
 		m_dc->TextOut(395,207+160,m_GuiGe);
 
 		m_dc->TextOut(730,207+160,CString("金额"));
-		m_dc->TextOut(1065,207+160,m_JinE);
+		m_dc->TextOut(1065,207+160,m_JinE+L" 元");
 
 		// 第六行
 //		m_dc->TextOut(80,207+200,CString("货物流向"));
