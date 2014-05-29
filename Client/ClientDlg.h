@@ -84,6 +84,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	unsigned char m_Weight[16]; // 重量的全局变量
+	int iWeight1,iWeight2;
 	int m_type; // 第一次或第二次过磅的类型 1为第一次 2位第二次
 
 	CONF conf;

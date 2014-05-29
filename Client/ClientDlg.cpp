@@ -149,6 +149,8 @@ BOOL CClientDlg::OnInitDialog()
 
 	memset(m_Weight,0,16); // 清空重量的全局变量
 	m_type = 0;
+	iWeight1 = 0;
+	iWeight2 = 0;
 
 #ifdef _DEBUG // 调试版开启
 	// 开启命令行窗口 
@@ -432,12 +434,16 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 		i++;
 	}
 
-	// 找到 0x02 之后 判断是否为 0x02 0x90
-	if(str[i]==0x02 && str[i+1]==0x90)
+	// 格式：02 31 30 20 20 20 20 20
+	//       重量数据
+	//       20 20 20 20 30 30 0D
+	//
+	// 找到 0x02 之后 判断是否为 0x02 0x31 0x30 
+	if(str[i]==0x02 && str[i+1]==0x31 && str[i+2]==0x30)
 	{
-		i+=2;
+		i+=3;
 
-		while(str[i]!=0x90) // 判断是否为尾部标志
+		while(str[i]!=0x0D) // 判断是否为尾部标志
 		{
 			if(str[i]==0x20) // 过滤掉 0x20 空格符号
 			{
@@ -447,13 +453,26 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 //				printf("str[%d]=0x%02X\n",i,str[i]); // 获得重量的数值
 				m_Weight[j] = str[i];
 				j++;
+				if(str[i+1]==0x20)
+				{
+					m_Weight[j]=0x00; // 如果下一位为0x20 则结束，设置为0x00表示字符串结束
+					break;
+				}
 			}
 			i++;
 		}
 	}
 
+	iWeight2 = atoi((char*)m_Weight);
+	if(iWeight2>iWeight1)
+	{
+		iWeight1 = iWeight2;
+	}
+
 	USES_CONVERSION;
-	CString strWeight=A2T((char*)m_Weight);
+//	CString strWeight=A2T((char*)m_Weight);
+	CString strWeight;
+	strWeight.Format(_T("%d"),iWeight1);
 	m_zhongliang.SetWindowText(strWeight+L"KG"); // 显示重量
 
 	// 设置第一次过磅和第二次过磅的皮重和毛重
@@ -468,7 +487,30 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 	{
 		m_maozhong.SetWindowText(A2W((char*)m_Weight));
 		// 净重 = 毛重 - 皮重 
+		int iJingZhong,iMaoZhong,iPiZhong;
+		CString MaoZhong,PiZhong,JingZhong;
+
+		m_maozhong.GetWindowText(MaoZhong); // 获得毛重
+		iMaoZhong = _ttoi(MaoZhong); // 将毛重转为整数 
+
+		m_pizhong.GetWindowText(PiZhong); // 获得皮重
+		iPiZhong = _ttoi(PiZhong); // 将皮重转为整数 
+
+		iJingZhong = iMaoZhong - iPiZhong; // 计算净重
+		JingZhong.Format(_T("%d"),iJingZhong);
+		m_jingzhong.SetWindowText(JingZhong); // 设置净重的值
+
 		// 修改净重 和 金额的值
+		int iDanJia;
+		float iJinE;
+		CString DanJia,JinE;
+
+		m_danjia.GetWindowText(DanJia); // 获得单价
+		iDanJia = _ttoi(DanJia); // 转换类型
+
+		iJinE = (float)((float)iJingZhong/1000) * iDanJia; // 计算金额
+		JinE.Format(_T("%.1f"),iJinE);
+		m_jine.SetWindowText(JinE); // 设置金额
 	}
 
 //	printf("COM1: %s\n",Weight);
