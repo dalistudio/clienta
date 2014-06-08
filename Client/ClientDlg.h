@@ -86,6 +86,7 @@ public:
 	unsigned char m_Weight[16]; // 重量的全局变量
 	int iWeight1,iWeight2;
 	int m_type; // 第一次或第二次过磅的类型 1为第一次 2位第二次
+	float m_midu; // 密度
 
 	CONF conf;
 	// 车型
@@ -96,7 +97,6 @@ public:
 	CComboBox m_guige;
 	// 流向
 	CComboBox m_liuxiang;
-	afx_msg void OnCbnSelchangeComboHuowu();
 	afx_msg void OnBnClickedButtonCom();
 	afx_msg void OnBnClickedButtonCom1Send();
 	afx_msg void OnBnClickedButtonCom2Send();
@@ -151,4 +151,9 @@ public:
 	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 	afx_msg void OnBnClickedButtonFind();
 	afx_msg void OnBnClickedButtonJiaojie();
+
+	void CalcJinE(); // 计算金额
+	afx_msg void OnEnChangeEditDanjia();
+	afx_msg void OnEnChangeEditJingzhong();
+	afx_msg void OnCbnSelchangeComboHuowu();
 };

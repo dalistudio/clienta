@@ -44,6 +44,7 @@ public:
 	CString m_JinE; // 金额
 	CString m_ChuChang; // 出厂时间
 	CString m_User; // 司磅员
+	int m_Times; // 过磅次数
 
 
 	void PreparePrinting();	//设置字体，根据dc计算一些参数

@@ -111,6 +111,9 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 //	ON_WM_ACTIVATE()
 ON_BN_CLICKED(IDC_BUTTON_FIND, &CClientDlg::OnBnClickedButtonFind)
 ON_BN_CLICKED(IDC_BUTTON_JIAOJIE, &CClientDlg::OnBnClickedButtonJiaojie)
+ON_EN_CHANGE(IDC_EDIT_DANJIA, &CClientDlg::OnEnChangeEditDanjia)
+ON_EN_CHANGE(IDC_EDIT_JINGZHONG, &CClientDlg::OnEnChangeEditJingzhong)
+ON_CBN_SELCHANGE(IDC_COMBO_HUOWU, &CClientDlg::OnCbnSelchangeComboHuowu)
 END_MESSAGE_MAP()
 
 
@@ -198,20 +201,28 @@ BOOL CClientDlg::OnInitDialog()
 		fread(data,1,len,f); // 读取文件数据
 		fclose(f); // 关闭文件
 		cJSON *jsonroot = cJSON_Parse(data); //json根
-		strcpy(conf.title,cJSON_GetObjectItem(jsonroot,"title")->valuestring); // 获得标题
+		if(jsonroot)
+		{
+			strcpy(conf.title,cJSON_GetObjectItem(jsonroot,"title")->valuestring); // 获得标题
 
-		cJSON *jsonServer=cJSON_GetObjectItem(jsonroot,"server");//取 Server
-		strcpy(conf.ip,cJSON_GetObjectItem(jsonServer,"ip")->valuestring); // 获得IP地址
-		conf.port = cJSON_GetObjectItem(jsonServer,"port")->valueint; // 获得端口
+			cJSON *jsonServer=cJSON_GetObjectItem(jsonroot,"server");//取 Server
+			strcpy(conf.ip,cJSON_GetObjectItem(jsonServer,"ip")->valuestring); // 获得IP地址
+			conf.port = cJSON_GetObjectItem(jsonServer,"port")->valueint; // 获得端口
 
-		cJSON *jsonCOM1=cJSON_GetObjectItem(jsonroot,"com1");//取 COM1
-		conf.com1_id = cJSON_GetObjectItem(jsonCOM1,"port")->valueint; // 获得COM端口
-		strcpy(conf.com1_para,cJSON_GetObjectItem(jsonCOM1,"para")->valuestring); // 获得COM的属性
+			cJSON *jsonCOM1=cJSON_GetObjectItem(jsonroot,"com1");//取 COM1
+			conf.com1_id = cJSON_GetObjectItem(jsonCOM1,"port")->valueint; // 获得COM端口
+			strcpy(conf.com1_para,cJSON_GetObjectItem(jsonCOM1,"para")->valuestring); // 获得COM的属性
 /*
-		cJSON *jsonCOM2=cJSON_GetObjectItem(jsonroot,"com2");//取 COM2
-		conf.com2_id = cJSON_GetObjectItem(jsonCOM2,"port")->valueint; // 获得COM端口
-		strcpy(conf.com2_para,cJSON_GetObjectItem(jsonCOM2,"para")->valuestring); // 获得COM的属性
+			cJSON *jsonCOM2=cJSON_GetObjectItem(jsonroot,"com2");//取 COM2
+			conf.com2_id = cJSON_GetObjectItem(jsonCOM2,"port")->valueint; // 获得COM端口
+			strcpy(conf.com2_para,cJSON_GetObjectItem(jsonCOM2,"para")->valuestring); // 获得COM的属性
 */
+		}
+		else
+		{
+			MessageBox(_T("配置文件错误！",_T("config"),MB_OK));
+		}
+		cJSON_Delete(jsonroot);
 	}
 
 	// 设置定时器
@@ -346,12 +357,10 @@ BOOL CClientDlg::OnInitDialog()
 	m_guige.AddString(_T("0.5"));
 	m_guige.AddString(_T("1.2"));
 	m_guige.AddString(_T("1.3"));
-	m_guige.AddString(_T("1.45"));
-	m_guige.AddString(_T("1.55"));
-	m_guige.AddString(_T("2.4"));
+	m_guige.SetCurSel(0);
 
-	m_liuxiang.AddString(_T("提货"));
-	m_liuxiang.AddString(_T("出场"));
+//	m_liuxiang.AddString(_T("提货"));
+//	m_liuxiang.AddString(_T("出场"));
 
 
 	//return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -499,18 +508,7 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 		iJingZhong = iMaoZhong - iPiZhong; // 计算净重
 		JingZhong.Format(_T("%d"),iJingZhong);
 		m_jingzhong.SetWindowText(JingZhong); // 设置净重的值
-
-		// 修改净重 和 金额的值
-		int iDanJia;
-		float iJinE;
-		CString DanJia,JinE;
-
-		m_danjia.GetWindowText(DanJia); // 获得单价
-		iDanJia = _ttoi(DanJia); // 转换类型
-
-		iJinE = (float)((float)iJingZhong/1000) * iDanJia; // 计算金额
-		JinE.Format(_T("%.1f"),iJinE);
-		m_jine.SetWindowText(JinE); // 设置金额
+		CalcJinE(); // 计算金额
 	}
 
 //	printf("COM1: %s\n",Weight);
@@ -518,6 +516,45 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 	return 0;
 }
 
+// 计算金额
+void CClientDlg::CalcJinE()
+{
+	// 获得净重
+	CString JingZhong;
+	m_jingzhong.GetWindowText(JingZhong);
+	int iJingZhong = _ttoi(JingZhong);
+
+	// 获得车型
+	CString CheXing;
+	m_chexing.GetWindowText(CheXing);
+
+	// 获得单价
+	CString DanJia;
+	m_danjia.GetWindowText(DanJia); // 获得单价
+	int iDanJia = _ttoi(DanJia); // 转换类型
+
+	// 计算吨数 和 金额
+	float iDun, iJinE;
+	iDun = (float)((float)iJingZhong/1000); // 吨 = 千克/1000
+
+	if(CheXing.Compare(L"大车")==0)
+	{
+		// 按立方计算
+		float LiFang = iDun / m_midu; // 立方 = 吨/密度
+		iJinE = iDanJia * LiFang; // 金额 = 单价 * 立方
+		GetDlgItem(IDC_STATIC_Dun)->SetWindowText(L"元/立方");
+	}
+	else if(CheXing.Compare(L"小车")==0)
+	{
+		// 按吨计算
+		iJinE = iDanJia * iDun; // 金额 = 单价 * 吨
+		GetDlgItem(IDC_STATIC_Dun)->SetWindowText(L"元/吨");
+	}
+
+	CString JinE;
+	JinE.Format(_T("%.1f"),iJinE);
+	m_jine.SetWindowText(JinE); // 设置金额
+}
 
 void CClientDlg::OnBnClickedButtonCom1Send()
 {
@@ -879,7 +916,17 @@ void CClientDlg::OnGet1()
 		{
 			USES_CONVERSION;  // dali
 			cJSON *jsonroot = cJSON_Parse(tStr); //json根
-			m_id.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"id")->valuestring)); // 设置“单号”
+			if(jsonroot)
+			{
+				m_id.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"id")->valuestring)); // 设置“单号”
+				m_post_id = 4; // 第一次提交
+			}
+			else
+			{
+				MessageBox(L"服务器返回单号错误！",L"服务器");
+			}
+			cJSON_Delete(jsonroot);
+
 			m_id.EnableWindow(FALSE); // 禁止“单号”对话框
 			m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
 			m_chehao.SetFocus(); // 设置车号为焦点
@@ -903,7 +950,8 @@ void CClientDlg::OnGet2()
 	TOKEN * t = (TOKEN *)malloc(sizeof(TOKEN));
 	TOKEN * l = (TOKEN *)malloc(sizeof(TOKEN));
 
-	char *tStr ,*lStr, *cStr;
+	char *tStr;
+	char *lStr;
 	tStr = strtoken(t,(char*)&m_net_rvc_data,"\r\n"); // 响应行
 	lStr = strtoken(l,(char*)tStr," "); // HTTP/1.1
 	lStr = strtoken(l,NULL," "); // 200 
@@ -929,10 +977,10 @@ void CClientDlg::OnGet2()
 			m_chehao.SetWindowText(_T("")); // 车号
 			m_dianhua.SetWindowText(_T("")); // 电话
 			m_shouhuo.SetWindowText(_T("")); // 收货单位
-			m_huowu.SetWindowText(_T("")); // 货物名称
+//			m_huowu.SetWindowText(_T("")); // 货物名称
 			m_guige.SetWindowText(_T("")); // 货物规格
 			m_liuxiang.SetWindowText(_T("")); // 货物流向
-			m_chexing.SetWindowText(_T("")); // 车型
+//			m_chexing.SetWindowText(_T("")); // 车型
 			m_pizhong.SetWindowText(_T("")); // 皮重
 			m_maozhong.SetWindowText(_T("")); // 毛重
 			m_jingzhong.SetWindowText(_T("")); // 净重
@@ -946,18 +994,24 @@ void CClientDlg::OnGet2()
 		{
 			USES_CONVERSION;  // dali
 			cJSON *jsonroot = cJSON_Parse(tStr); //json根
-			m_chehao.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"ch")->valuestring))); // 车号
-			m_dianhua.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"dh")->valuestring)); // 电话
-			m_shouhuo.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dw")->valuestring))); // 单位
-			m_huowu.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"hw")->valuestring))); // 货物
-			m_guige.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"gg")->valuestring)); // 规格
-			m_liuxiang.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"lx")->valuestring))); // 流向。这个可以删除
-			m_chexing.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"cx")->valuestring))); // 车型
-			m_pizhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"pz")->valuestring)); // 皮重
-			m_maozhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"mz")->valuestring)); // 毛重
-			m_jingzhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"jz")->valuestring)); // 净重
-			m_danjia.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dj")->valuestring))); // 单价
-			m_jine.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"je")->valuestring))); // 金额
+			if(jsonroot)
+			{
+				m_chehao.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"ch")->valuestring))); // 车号
+				m_dianhua.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"dh")->valuestring)); // 电话
+				m_shouhuo.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dw")->valuestring))); // 单位
+				m_huowu.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"hw")->valuestring))); // 货物
+				m_guige.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"gg")->valuestring)); // 规格
+				m_liuxiang.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"lx")->valuestring))); // 流向。这个可以删除
+				m_chexing.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"cx")->valuestring))); // 车型
+				m_pizhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"pz")->valuestring)); // 皮重
+				m_maozhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"mz")->valuestring)); // 毛重
+				m_jingzhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"jz")->valuestring)); // 净重
+				m_danjia.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dj")->valuestring))); // 单价
+				m_midu = atof(cJSON_GetObjectItem(jsonroot,"md")->valuestring); // 密度
+				m_jine.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"je")->valuestring))); // 金额
+				m_post_id = 6; // 第二次提交
+			}
+			cJSON_Delete(jsonroot);
 		}
 	}
 	if(strcmp(lStr,"400")==0)
@@ -967,6 +1021,9 @@ void CClientDlg::OnGet2()
 
 	m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
 	m_jingzhong.SetFocus(); // 设置净重为焦点
+
+//	free(t);
+//	free(l);
 }
 
 // 第一次提交单据
@@ -1034,7 +1091,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	m_jingzhong.GetWindowText(strJingZhong); // 净重
 	m_danjia.GetWindowText(strDanJia); // 单价
 	m_jine.GetWindowText(strJinE); // 金额
-
+/*
 	// 如果毛重为空，表示第一次提交
 	if(strMaoZhong.IsEmpty())
 	{
@@ -1051,15 +1108,30 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	}
 	else // 第二次提交
 	{
-		m_post_id = 6;
+		if(strJingZhong.IsEmpty())
+		{
+			MessageBox(L"\"净重\"不能为空，检查地磅线路等是否正常！",L"地磅");
+			return;
+		}
+		else
+		{
+			m_post_id = 6;
+		}
+		
 	}
-
+*/
 	char str[1024]={0};
 	sprintf(str,"DanHao=%s&CheHao=%s&CheXing=%s&",W2A(strDanHao),W2A(strCheHao),W2A(strCheXing));
 	sprintf(str,"%sDanWei=%s&DianHua=%s&",str,W2A(strDanWei),W2A(strDianHua));
 	sprintf(str,"%sHuoWu=%s&GuiGe=%s&",str,W2A(strHuoWu),W2A(strGuiGe));
 	sprintf(str,"%sPiZhong=%s&MaoZhong=%s&JiangZhong=%s&",str,W2A(strPiZhong),W2A(strMaoZhong),W2A(strJingZhong));
-	sprintf(str,"%sDanJia=%s&JinE=%s&ZhuangTai=%d",str,W2A(strDanJia),W2A(strJinE),m_post_id);
+	if(m_type==1) m_post_id = 4;
+	if(m_type==2) m_post_id = 6;
+	sprintf(str,"%sDanJia=%s&JinE=%s&ZhuangTai=%d&",str,W2A(strDanJia),W2A(strJinE),m_post_id);
+
+	CString strUser;
+	m_user.GetWindowText(strUser);
+	sprintf(str,"%sSiBangYuan=%s",str, W2A(strUser)); // 司磅员
 	PostData("/post.php",str);
 
 }
@@ -1094,10 +1166,10 @@ void CClientDlg::OnBnClickedButtonDayin()
 	m_chehao.SetWindowText(_T("")); // 车号
 	m_dianhua.SetWindowText(_T("")); // 电话
 	m_shouhuo.SetWindowText(_T("")); // 收货单位
-	m_huowu.SetWindowText(_T("")); // 货物名称
+//	m_huowu.SetWindowText(_T("")); // 货物名称
 	m_guige.SetWindowText(_T("")); // 货物规格
 	m_liuxiang.SetWindowText(_T("")); // 货物流向
-	m_chexing.SetWindowText(_T("")); // 车型
+//	m_chexing.SetWindowText(_T("")); // 车型
 	m_pizhong.SetWindowText(_T("")); // 皮重
 	m_maozhong.SetWindowText(_T("")); // 毛重
 	m_jingzhong.SetWindowText(_T("")); // 净重
@@ -1251,7 +1323,7 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_printer->m_JinE = DaYin.m_JinE; // 金额
 	m_printer->m_ChuChang = DaYin.m_ChuChang; // 出厂时间
 	m_printer->m_User = DaYin.m_User; // 司磅员
-
+	m_printer->m_Times  = m_type; // 过磅次数
 	
 	return TRUE;
 }
@@ -1374,4 +1446,57 @@ void CClientDlg::OnBnClickedButtonFind()
 void CClientDlg::OnBnClickedButtonJiaojie()
 {
 	// TODO: 在此添加控件通知处理程序代码
+}
+
+// 修改单价
+void CClientDlg::OnEnChangeEditDanjia()
+{
+	// TODO:  如果该控件是 RICHEDIT 控件，它将不
+	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
+	// 函数并调用 CRichEditCtrl().SetEventMask()，
+	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
+
+	// TODO:  在此添加控件通知处理程序代码
+	CalcJinE(); // 计算金额
+}
+
+// 修改净重
+void CClientDlg::OnEnChangeEditJingzhong()
+{
+	// TODO:  如果该控件是 RICHEDIT 控件，它将不
+	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
+	// 函数并调用 CRichEditCtrl().SetEventMask()，
+	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
+
+	// TODO:  在此添加控件通知处理程序代码
+	CalcJinE(); // 计算金额
+}
+
+// 修改货物
+void CClientDlg::OnCbnSelchangeComboHuowu()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CString HuoWu;
+	m_huowu.GetWindowText(HuoWu); // 获得货物的名称
+	if(HuoWu.Compare(L"青石")==0)
+	{
+		m_guige.ResetContent(); // 清空下拉列表
+		m_guige.AddString(_T("0.5"));
+		m_guige.AddString(_T("1.2"));
+		m_guige.AddString(_T("1.3"));
+		m_guige.SetCurSel(0);
+		return;
+	}
+	if(HuoWu.Compare(L"半青石")==0)
+	{
+		m_guige.ResetContent();
+		m_guige.AddString(_T("0.5"));
+		m_guige.AddString(_T("1.3"));
+		m_guige.AddString(_T("2.4"));
+		m_guige.SetCurSel(0);
+		return;
+	}
+	m_guige.ResetContent();
+	m_guige.AddString(_T("0"));
+	m_guige.SetCurSel(0);
 }

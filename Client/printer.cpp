@@ -133,7 +133,8 @@ void CPrinter::PrintBody()
 		strDateTime.Format(L"打印时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
 		m_dc->TextOut(60,150,strDateTime);
 
-		strDateTime.Format(L"单号：%4d%02d%02d %s",st.wYear,st.wMonth,st.wDay,m_id); // 单号
+		//strDateTime.Format(L"单号：%4d%02d%02d %s",st.wYear,st.wMonth,st.wDay,m_id); // 单号
+		strDateTime.Format(L"单号：%s",m_id); // 单号
 		m_dc->TextOut(600,150,strDateTime); // 单号
 
 		strDateTime.Format(L"电话：%s",m_DianHua);
@@ -204,14 +205,22 @@ void CPrinter::PrintBody()
 
 		// 页脚
 		strDateTime.Format(L"司磅员：%s",m_User);
-		m_dc->TextOut(60,460,strDateTime);
-		m_dc->TextOut(600,460,CString("客户签名："));
-		m_dc->TextOut(1000,460,CString("司机签名："));
+		m_dc->TextOut(60,410,strDateTime);
+		m_dc->TextOut(600,410,CString("客户签名："));
+		m_dc->TextOut(1000,410,CString("司机签名："));
 
-		m_dc->TextOut(60,410,CString("白：存根联"));
-		m_dc->TextOut(375,410,CString("红：财务联"));
-		m_dc->TextOut(690,410,CString("绿：客户联"));
-		m_dc->TextOut(1005,410,CString("黄：保安联"));
+		if(m_Times==1) // 第一次过磅
+		{
+			m_dc->TextOut(60,460,CString("白：存根联"));
+			m_dc->TextOut(375,460,CString("红：进料联"));
+		}
+		if(m_Times==2) // 第二次过磅
+		{
+			m_dc->TextOut(60,460,CString("白：保安联"));
+			m_dc->TextOut(375,460,CString("红：存根联"));
+			m_dc->TextOut(690,460,CString("绿：财务联"));
+			m_dc->TextOut(1005,460,CString("黄：客户联"));
+		}
 
 		// 条形码
 		USES_CONVERSION;
