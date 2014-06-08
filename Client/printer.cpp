@@ -187,7 +187,14 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(395,207+120,m_HuoWu);
 
 		m_dc->TextOut(730,207+120,CString("单价"));
-		m_dc->TextOut(1065,207+120,m_DanJia+L" 元");
+		if(m_CheXing.Compare(L"大车")==0)
+		{
+			m_dc->TextOut(1065,207+120,m_DanJia+L" 元/立方");
+		}
+		else
+		{
+			m_dc->TextOut(1065,207+120,m_DanJia+L" 元/吨");
+		}
 
 		// 第五行
 		m_dc->TextOut(80,207+160,CString("货物规格"));

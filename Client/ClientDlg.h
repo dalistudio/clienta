@@ -156,4 +156,5 @@ public:
 	afx_msg void OnEnChangeEditDanjia();
 	afx_msg void OnEnChangeEditJingzhong();
 	afx_msg void OnCbnSelchangeComboHuowu();
+	afx_msg void OnCbnSelchangeComboChexing();
 };

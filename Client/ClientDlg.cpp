@@ -114,6 +114,7 @@ ON_BN_CLICKED(IDC_BUTTON_JIAOJIE, &CClientDlg::OnBnClickedButtonJiaojie)
 ON_EN_CHANGE(IDC_EDIT_DANJIA, &CClientDlg::OnEnChangeEditDanjia)
 ON_EN_CHANGE(IDC_EDIT_JINGZHONG, &CClientDlg::OnEnChangeEditJingzhong)
 ON_CBN_SELCHANGE(IDC_COMBO_HUOWU, &CClientDlg::OnCbnSelchangeComboHuowu)
+ON_CBN_SELCHANGE(IDC_COMBO_CHEXING, &CClientDlg::OnCbnSelchangeComboChexing)
 END_MESSAGE_MAP()
 
 
@@ -1091,7 +1092,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	m_jingzhong.GetWindowText(strJingZhong); // 净重
 	m_danjia.GetWindowText(strDanJia); // 单价
 	m_jine.GetWindowText(strJinE); // 金额
-/*
+
 	// 如果毛重为空，表示第一次提交
 	if(strMaoZhong.IsEmpty())
 	{
@@ -1100,11 +1101,10 @@ void CClientDlg::OnBnClickedButtonTijiao()
 			MessageBox(L"\"皮重\"不能为空，检查地磅线路等是否正常！",L"地磅");
 			return;
 		}
-		else
-		{
-			m_post_id = 4; // 第一次提交
-		}
-		
+//		else
+//		{
+//			m_post_id = 4; // 第一次提交
+//		}
 	}
 	else // 第二次提交
 	{
@@ -1113,13 +1113,13 @@ void CClientDlg::OnBnClickedButtonTijiao()
 			MessageBox(L"\"净重\"不能为空，检查地磅线路等是否正常！",L"地磅");
 			return;
 		}
-		else
-		{
-			m_post_id = 6;
-		}
+//		else
+//		{
+//			m_post_id = 6;
+//		}
 		
 	}
-*/
+
 	char str[1024]={0};
 	sprintf(str,"DanHao=%s&CheHao=%s&CheXing=%s&",W2A(strDanHao),W2A(strCheHao),W2A(strCheXing));
 	sprintf(str,"%sDanWei=%s&DianHua=%s&",str,W2A(strDanWei),W2A(strDianHua));
@@ -1446,6 +1446,20 @@ void CClientDlg::OnBnClickedButtonFind()
 void CClientDlg::OnBnClickedButtonJiaojie()
 {
 	// TODO: 在此添加控件通知处理程序代码
+//	SYSTEMTIME st;
+//	GetLocalTime(&st);
+	USES_CONVERSION;
+	CString strUser;
+	m_user.GetWindowText(strUser);
+	char str[1024]={0};
+	sprintf(str,"start http://");
+	sprintf(str,"%s%s/",str,conf.ip);
+	sprintf(str,"%sjiaojie.php?user=",str);
+	sprintf(str,"%s%s",str,W2A(strUser));
+//	sprintf(str,"%s%4d%02d%02d%%20%02d:%02d:%02d",str,st.wYear,st.wMonth,st.wDay,st.wHour-8,st.wMinute,st.wSecond); // 开始时间：设置为上班时间
+//	sprintf(str,"%s^&end=",str); // 注意在win的命令行批处理中'&'需要转意为'^&'
+//	sprintf(str,"%s%4d%02d%02d%%20%02d:%02d:%02d",str,st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond); // 结束时间: 设置为当前时间
+	system(str);
 }
 
 // 修改单价
@@ -1499,4 +1513,11 @@ void CClientDlg::OnCbnSelchangeComboHuowu()
 	m_guige.ResetContent();
 	m_guige.AddString(_T("0"));
 	m_guige.SetCurSel(0);
+}
+
+// 修改车型
+void CClientDlg::OnCbnSelchangeComboChexing()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CalcJinE(); // 计算金额
 }
