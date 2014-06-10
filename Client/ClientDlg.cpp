@@ -149,6 +149,9 @@ BOOL CClientDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 
 	memset(m_Weight,0,16); // 清空重量的全局变量
+	memset(m_dibang_data,0,32); // 清空地磅数据
+	m_dibang_data_pos = 0;
+	m_Start = 0; // 是否开始收集地磅数据
 	m_type = 0;
 	iWeight1 = 0;
 	iWeight2 = 0;
@@ -402,70 +405,101 @@ HCURSOR CClientDlg::OnQueryDragIcon()
 LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 {
 	// 这里接收地磅数据，并分析处理后修改相关控件的显示。
-
 	int len;
-	unsigned char str[128]={0};
-	len = com1.read((char *)str, 128);
-	char Weight[16]={0};
+	unsigned char str[8]={0};
+	len = com1.read((char *)str, 2);
 
-	int i = 0;
-	int j = 0;
-	while(str[i]!=0x02) // 循环所有字节，直到找到 0x02
+	switch(str[0]) // 收到的第一个字符
 	{
-//		printf("str[i]=0x%02X\n",str[i]);
-		i++;
+	case 0x02: // 开始标志
+		// 开始搜集数据
+		if(m_Start==0)
+		{
+			m_Start = 1;
+			m_dibang_data[m_dibang_data_pos] = str[0]; // 将字符赋值给地磅数据的全局变量
+			m_dibang_data_pos++; // 地磅数据位置+1
+		}
+		else
+		{
+			m_Start==0; // 防止出现多次0x02 而没有 0x0d结束
+		}
+		return 0; // 返回
+
+	case 0x0D: // 结束标志
+		// 结束搜集数据
+		// 调用协议处理函数，分析数据。
+		if(m_Start==1)
+		{
+			m_Start = 0;
+			m_dibang_data[m_dibang_data_pos] = str[0];
+			m_dibang_data[m_dibang_data_pos+1] = 0x00; // 无需再获取下一个字符了，直接在后面加上0x00结束字符串。
+			m_dibang_data_pos = 0; // 初始化地磅数据的位置为0，防止溢出。
+			break; // 中断switch继续执行，以便分析地磅数据。
+		}
+		else
+		{
+			return 0; // 返回
+		}
+		
+	default:
+		if(m_Start==1)
+		{
+			m_dibang_data[m_dibang_data_pos] = str[0];
+			m_dibang_data_pos++;
+		}
+		return 0; // 返回
 	}
 
-	// 格式：02 31 30 20 20 20 20 20
-	//       重量数据
-	//       20 20 20 20 30 30 0D
-	//
-	// 找到 0x02 之后 判断是否为 0x02 0x31 0x30 
-	if(str[i]==0x02 && str[i+1]==0x31 && str[i+2]==0x30)
+	// 解析地磅数据
+	int i=0;
+	int j=0;
+	while(m_dibang_data[i]!=0x0D) // 循环数据，直到遇到0x0D
 	{
-		i+=3;
-
-		while(str[i]!=0x0D) // 判断是否为尾部标志
+		if(m_dibang_data[i]==0x02) // 遇到开始标志 0x02
 		{
-			if(str[i]==0x20) // 过滤掉 0x20 空格符号
+			i+=3; // 跳过三个字符，一般为0x02 0x31 0x30 未知作用。
+		}
+		if(m_dibang_data[i]==0x20) // 如果遇到空格标志 0x20 则忽略
+		{
+			i++;
+		}
+		else
+		{
+			m_Weight[j] = m_dibang_data[i];
+//			printf("char  = 0x%02X\n",m_dibang_data[i]);
+			j++;
+			if(m_dibang_data[i+1]==0x20) // 如果下一个字符为0x20表示已经获取完重量了，后面的数据忽略。
 			{
-			}
-			else
-			{
-//				printf("str[%d]=0x%02X\n",i,str[i]); // 获得重量的数值
-				m_Weight[j] = str[i];
-				j++;
-				if(str[i+1]==0x20)
-				{
-					m_Weight[j]=0x00; // 如果下一位为0x20 则结束，设置为0x00表示字符串结束
-					break;
-				}
+				m_Weight[j] = 0x00; // 直接给后一个字符赋值0x00，结束字符串。
+				j=0;
+				break; // 跳出循环，继续执行，以便显示重量
 			}
 			i++;
 		}
 	}
 
-	iWeight2 = atoi((char*)m_Weight);
-	if(iWeight2>0)
-	{
-		printf("重量 = %d\n",iWeight2);
-	}
-	if(iWeight2>iWeight1)
-	{
-		iWeight1 = iWeight2;
-	}
+//	printf("m_Weight = %s \n",m_Weight);
+
+	iWeight2 = atoi((char*)m_Weight); // 将字符型重量的值转换为数字型
+	CString strWeight;
+	strWeight.Format(_T("%d"),iWeight2);
+	m_zhongliang.SetWindowText(strWeight+L"KG"); // 实时显示重量
+
+	// 这里应该判断一段时间内重量稳定之后，采用这个重量的值。
+	// 而不是使用最重的值作为最终值。
+	// 其实这里不需要处理，由司磅员决定，然后按提交即可。
+
+	//if(iWeight2>iWeight1) // 这里以最重的值为最终值。
+	//{
+	//	iWeight1 = iWeight2;
+	//}
 
 	USES_CONVERSION;
-//	CString strWeight=A2T((char*)m_Weight);
-	CString strWeight;
-	strWeight.Format(_T("%d"),iWeight1);
-	m_zhongliang.SetWindowText(strWeight+L"KG"); // 显示重量
-
 	// 设置第一次过磅和第二次过磅的皮重和毛重
 	// 皮重
 	if(m_type == 1)
 	{
-		m_pizhong.SetWindowText(A2W((char*)m_Weight));
+		m_pizhong.SetWindowText(A2W((char*)m_Weight)); // 将值显示在皮重控件中。
 	}
 
 	// 毛重
@@ -484,12 +518,9 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 
 		iJingZhong = iMaoZhong - iPiZhong; // 计算净重
 		JingZhong.Format(_T("%d"),iJingZhong);
-		m_jingzhong.SetWindowText(JingZhong); // 设置净重的值
+		m_jingzhong.SetWindowText(JingZhong); // 将值显示在净重控件中。
 		CalcJinE(); // 计算金额
 	}
-
-//	printf("COM1: %s\n",Weight);
-
 	return 0;
 }
 

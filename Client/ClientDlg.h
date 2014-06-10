@@ -69,6 +69,10 @@ public:
 	char m_net_rvc_data[1025]; // 接收到的数据
 	int m_net_rvc_len; // 接收到的数据长度
 
+	unsigned char m_dibang_data[32]; // 地磅数据
+	int m_dibang_data_pos; // 地磅数据的位置
+	int m_Start; // 是否开始收集地磅数据
+
 // 实现
 protected:
 	HICON m_hIcon;
@@ -95,8 +99,7 @@ public:
 	CComboBox m_huowu;
 	// 规格
 	CComboBox m_guige;
-	// 流向
-	CComboBox m_liuxiang;
+
 	afx_msg void OnBnClickedButtonCom();
 	afx_msg void OnBnClickedButtonCom1Send();
 	afx_msg void OnBnClickedButtonCom2Send();
