@@ -67,11 +67,11 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_CHEXING, m_chexing);
 	DDX_Control(pDX, IDC_COMBO_HUOWU, m_huowu);
 	DDX_Control(pDX, IDC_COMBO_GUIGE, m_guige);
-	DDX_Control(pDX, IDC_COMBO_LIUXIANG, m_liuxiang);
+//	DDX_Control(pDX, IDC_COMBO_LIUXIANG, m_liuxiang);
 	DDX_Control(pDX, IDC_EDIT_IP, m_ip);
 	DDX_Control(pDX, IDC_EDIT_PORT, m_port);
 	DDX_Control(pDX, IDC_EDIT_COM1, m_com1);
-	DDX_Control(pDX, IDC_EDIT_COM2, m_com2);
+//	DDX_Control(pDX, IDC_EDIT_COM2, m_com2);
 	DDX_Control(pDX, IDC_EDIT_USER, m_user);
 	DDX_Control(pDX, IDC_EDIT_PWD, m_pwd);
 	DDX_Control(pDX, IDC_EDIT_DANHAO, m_id);
@@ -97,7 +97,7 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 
 	ON_MESSAGE(ON_COM_RECEIVE, On_Receive) // 如果收到 ON_COM_RECEIVE 消息，调用接收函数
 	ON_BN_CLICKED(IDC_BUTTON_COM1_SEND, &CClientDlg::OnBnClickedButtonCom1Send)
-	ON_BN_CLICKED(IDC_BUTTON_COM2_SEND, &CClientDlg::OnBnClickedButtonCom2Send)
+//	ON_BN_CLICKED(IDC_BUTTON_COM2_SEND, &CClientDlg::OnBnClickedButtonCom2Send)
 	ON_BN_CLICKED(IDC_BUTTON_NET_CONN, &CClientDlg::OnBnClickedButtonNetConn)
 	ON_BN_CLICKED(IDC_BUTTON_COM_CONN, &CClientDlg::OnBnClickedButtonComConn)
 	ON_BN_CLICKED(IDC_BUTTON_LOGIN, &CClientDlg::OnBnClickedButtonLogin)
@@ -256,7 +256,7 @@ BOOL CClientDlg::OnInitDialog()
 		_T("隶书"));				// 字体名称
 
 	// 公司LOGO
-	GetDlgItem(IDC_STATIC_LOGO)->SetFont(m_Font);
+//	GetDlgItem(IDC_STATIC_LOGO)->SetFont(m_Font);
 
 	// 重量
 	GetDlgItem(IDC_EDIT_ZHONGLIANG)->SetFont(m_Font);
@@ -292,8 +292,8 @@ BOOL CClientDlg::OnInitDialog()
 	GetDlgItem(IDC_EDIT_SHOUHUO)->SetFont(m_Font);
 
 	// 货物流向
-	GetDlgItem(IDC_STATIC_LIUXIANG)->SetFont(m_Font);
-	GetDlgItem(IDC_COMBO_LIUXIANG)->SetFont(m_Font);
+//	GetDlgItem(IDC_STATIC_LIUXIANG)->SetFont(m_Font);
+//	GetDlgItem(IDC_COMBO_LIUXIANG)->SetFont(m_Font);
 
 	// 皮重单位
 	GetDlgItem(IDC_STATIC_PZKG)->SetFont(m_Font);
@@ -474,6 +474,10 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 	}
 
 	iWeight2 = atoi((char*)m_Weight);
+	if(iWeight2>0)
+	{
+		printf("重量 = %d\n",iWeight2);
+	}
 	if(iWeight2>iWeight1)
 	{
 		iWeight1 = iWeight2;
@@ -565,12 +569,6 @@ void CClientDlg::OnBnClickedButtonCom1Send()
 	frame->Create(_T("打印预览"), this,TRUE );
 }
 
-
-void CClientDlg::OnBnClickedButtonCom2Send()
-{
-	// TODO: 在此添加控件通知处理程序代码
-}
-
 // 连接网络
 void CClientDlg::OnConnected()
 {
@@ -593,8 +591,8 @@ void CClientDlg::OnRvc()
 	if (SOCKET_ERROR != m_net_rvc_len)
 	{
 		printf("%s\n",m_net_rvc_data);
-		USES_CONVERSION;  // dali
-		GetDlgItem(IDC_EDIT_INFO)->SetWindowText(A2CW(m_net_rvc_data));
+//		USES_CONVERSION;  // dali
+//		GetDlgItem(IDC_EDIT_INFO)->SetWindowText(A2CW(m_net_rvc_data));
 		switch(m_post_id)
 		{
 		case 1: // 保持连接
@@ -887,8 +885,8 @@ void CClientDlg::OnGet1()
 	GetWindow();
 	m_jingzhong.SetReadOnly(TRUE);
 	m_danjia.SetReadOnly(TRUE);
-	m_liuxiang.SetCurSel(0); // 设置为提货
-	m_liuxiang.EnableWindow(FALSE); // 设置提货为禁用
+//	m_liuxiang.SetCurSel(0); // 设置为提货
+//	m_liuxiang.EnableWindow(FALSE); // 设置提货为禁用
 
 	TOKEN * t = (TOKEN *)malloc(sizeof(TOKEN));
 	TOKEN * l = (TOKEN *)malloc(sizeof(TOKEN));
@@ -940,7 +938,7 @@ void CClientDlg::OnGet1()
 void CClientDlg::OnGet2()
 {
 	SetWindow(); // 禁用所有控件
-	m_liuxiang.SetCurSel(1); // 选择流向为出厂
+//	m_liuxiang.SetCurSel(1); // 选择流向为出厂
 	m_jingzhong.EnableWindow(TRUE); // 启用“净重”控件
 	m_danjia.EnableWindow(TRUE); // 启用“单价”控件
 	m_jingzhong.SetReadOnly(FALSE); // 设“净重”为非只读
@@ -980,7 +978,7 @@ void CClientDlg::OnGet2()
 			m_shouhuo.SetWindowText(_T("")); // 收货单位
 //			m_huowu.SetWindowText(_T("")); // 货物名称
 			m_guige.SetWindowText(_T("")); // 货物规格
-			m_liuxiang.SetWindowText(_T("")); // 货物流向
+//			m_liuxiang.SetWindowText(_T("")); // 货物流向
 //			m_chexing.SetWindowText(_T("")); // 车型
 			m_pizhong.SetWindowText(_T("")); // 皮重
 			m_maozhong.SetWindowText(_T("")); // 毛重
@@ -1002,7 +1000,7 @@ void CClientDlg::OnGet2()
 				m_shouhuo.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dw")->valuestring))); // 单位
 				m_huowu.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"hw")->valuestring))); // 货物
 				m_guige.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"gg")->valuestring)); // 规格
-				m_liuxiang.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"lx")->valuestring))); // 流向。这个可以删除
+//				m_liuxiang.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"lx")->valuestring))); // 流向。这个可以删除
 				m_chexing.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"cx")->valuestring))); // 车型
 				m_pizhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"pz")->valuestring)); // 皮重
 				m_maozhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"mz")->valuestring)); // 毛重
@@ -1148,7 +1146,7 @@ void CClientDlg::OnBnClickedButtonDayin()
 	m_dianhua.GetWindowText(DaYin.m_DianHua);
 	m_huowu.GetWindowText(DaYin.m_HuoWu);
 	m_guige.GetWindowText(DaYin.m_GuiGe);
-	m_liuxiang.GetWindowText(DaYin.m_LiuXiang);
+//	m_liuxiang.GetWindowText(DaYin.m_LiuXiang);
 	m_pizhong.GetWindowText(DaYin.m_PiZhong);
 	m_maozhong.GetWindowText(DaYin.m_MaoZhong);
 	m_jingzhong.GetWindowText(DaYin.m_JingZhong);
@@ -1168,7 +1166,7 @@ void CClientDlg::OnBnClickedButtonDayin()
 	m_shouhuo.SetWindowText(_T("")); // 收货单位
 //	m_huowu.SetWindowText(_T("")); // 货物名称
 	m_guige.SetWindowText(_T("")); // 货物规格
-	m_liuxiang.SetWindowText(_T("")); // 货物流向
+//	m_liuxiang.SetWindowText(_T("")); // 货物流向
 //	m_chexing.SetWindowText(_T("")); // 车型
 	m_pizhong.SetWindowText(_T("")); // 皮重
 	m_maozhong.SetWindowText(_T("")); // 毛重
@@ -1193,7 +1191,7 @@ void CClientDlg::SetWindow()
 	m_shouhuo.EnableWindow(FALSE); // 单位
 	m_huowu.EnableWindow(FALSE); // 货物
 	m_guige.EnableWindow(FALSE); // 规格
-	m_liuxiang.EnableWindow(FALSE); // 流向
+//	m_liuxiang.EnableWindow(FALSE); // 流向
 	m_pizhong.EnableWindow(FALSE); // 皮重
 	m_maozhong.EnableWindow(FALSE); // 毛重
 	m_jingzhong.EnableWindow(FALSE); // 净重
@@ -1211,7 +1209,7 @@ void CClientDlg::GetWindow()
 	m_shouhuo.EnableWindow(TRUE); // 单位
 	m_huowu.EnableWindow(TRUE); // 货物
 	m_guige.EnableWindow(TRUE); // 规格
-	m_liuxiang.EnableWindow(TRUE); // 流向
+//	m_liuxiang.EnableWindow(TRUE); // 流向
 	m_pizhong.EnableWindow(TRUE); // 皮重
 	m_maozhong.EnableWindow(TRUE); // 毛重
 	m_jingzhong.EnableWindow(TRUE); // 净重
@@ -1297,7 +1295,7 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_dianhua.GetWindowText(DaYin.m_DianHua);
 	m_huowu.GetWindowText(DaYin.m_HuoWu);
 	m_guige.GetWindowText(DaYin.m_GuiGe);
-	m_liuxiang.GetWindowText(DaYin.m_LiuXiang);
+//	m_liuxiang.GetWindowText(DaYin.m_LiuXiang);
 	m_pizhong.GetWindowText(DaYin.m_PiZhong);
 	m_maozhong.GetWindowText(DaYin.m_MaoZhong);
 	m_jingzhong.GetWindowText(DaYin.m_JingZhong);
@@ -1315,7 +1313,7 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_printer->m_DianHua = DaYin.m_DianHua; // 电话
 	m_printer->m_HuoWu = DaYin.m_HuoWu; // 货物名称
 	m_printer->m_GuiGe = DaYin.m_GuiGe; // 货物规格
-	m_printer->m_LiuXiang = DaYin.m_LiuXiang; // 货物流向
+//	m_printer->m_LiuXiang = DaYin.m_LiuXiang; // 货物流向
 	m_printer->m_PiZhong = DaYin.m_PiZhong; // 皮重
 	m_printer->m_MaoZhong = DaYin.m_MaoZhong; // 毛重
 	m_printer->m_JingZhong = DaYin.m_JingZhong; // 净重
@@ -1388,7 +1386,7 @@ void CClientDlg::DoPrint()
 		printer->m_DianHua = DaYin.m_DianHua; // 电话
 		printer->m_HuoWu = DaYin.m_HuoWu; // 货物名称
 		printer->m_GuiGe = DaYin.m_GuiGe; // 货物规格
-		printer->m_LiuXiang = DaYin.m_LiuXiang; // 货物流向
+//		printer->m_LiuXiang = DaYin.m_LiuXiang; // 货物流向
 		printer->m_PiZhong = DaYin.m_PiZhong; // 皮重
 		printer->m_MaoZhong = DaYin.m_MaoZhong; // 毛重
 		printer->m_JingZhong = DaYin.m_JingZhong; // 净重
