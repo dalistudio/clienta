@@ -405,9 +405,11 @@ HCURSOR CClientDlg::OnQueryDragIcon()
 LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 {
 	// 这里接收地磅数据，并分析处理后修改相关控件的显示。
+	// 自动判断是新地磅还是旧地磅的数据
 	int len;
 	unsigned char str[8]={0};
 	len = com1.read((char *)str, 2);
+	int type = 0; // 用于判断新旧地磅的数据
 
 	switch(str[0]) // 收到的第一个字符
 	{
@@ -425,9 +427,26 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 		}
 		return 0; // 返回
 
+	case 0x03:
+		// 结束搜集数据
+		// 调用协议处理函数，分析数据。
+		type = 1; // 旧地磅
+		if(m_Start==1)
+		{
+			m_Start = 0;
+			m_dibang_data[m_dibang_data_pos] = str[0];
+			m_dibang_data[m_dibang_data_pos+1] = 0x00; // 无需再获取下一个字符了，直接在后面加上0x00结束字符串。
+			m_dibang_data_pos = 0; // 初始化地磅数据的位置为0，防止溢出。
+			break; // 中断switch继续执行，以便分析地磅数据。
+		}
+		else
+		{
+			return 0; // 返回
+		}
 	case 0x0D: // 结束标志
 		// 结束搜集数据
 		// 调用协议处理函数，分析数据。
+		type = 2; // 新地磅
 		if(m_Start==1)
 		{
 			m_Start = 0;
@@ -450,33 +469,74 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 		return 0; // 返回
 	}
 
-	// 解析地磅数据
-	int i=0;
-	int j=0;
-	while(m_dibang_data[i]!=0x0D) // 循环数据，直到遇到0x0D
+	// 错误的地磅数据处理
+	if(type==0) return 0; // 如果没有符合地磅的数据直接返回
+	
+	// 旧地磅数据处理
+	if(type==1)
 	{
-		if(m_dibang_data[i]==0x02) // 遇到开始标志 0x02
+		// 旧地磅数据格式
+		// 02 2B 30 30 30 30 30 30 30 31 42 03 #  0KG
+		// 02 2B 30 30 30 30 38 30 30 31 33 03 # 80KG
+		// 02 开始符号
+		// 2B "+" 正数
+		// 30 30 30 30 38 30 "000080" 表示80KG
+		// 30 未知作用，可能也是重量的一部分
+		// 31 33 可能是校验值
+		// 03 结束符号
+		if(m_dibang_data[0]==0x02 && m_dibang_data[1]==0x2B)
 		{
-			i+=3; // 跳过三个字符，一般为0x02 0x31 0x30 未知作用。
-		}
-		if(m_dibang_data[i]==0x20) // 如果遇到空格标志 0x20 则忽略
-		{
-			i++;
-		}
-		else
-		{
-			m_Weight[j] = m_dibang_data[i];
-//			printf("char  = 0x%02X\n",m_dibang_data[i]);
-			j++;
-			if(m_dibang_data[i+1]==0x20) // 如果下一个字符为0x20表示已经获取完重量了，后面的数据忽略。
-			{
-				m_Weight[j] = 0x00; // 直接给后一个字符赋值0x00，结束字符串。
-				j=0;
-				break; // 跳出循环，继续执行，以便显示重量
-			}
-			i++;
+			m_Weight[0] = m_dibang_data[2]; // 百吨
+			m_Weight[1] = m_dibang_data[3]; // 十吨
+			m_Weight[2] = m_dibang_data[4]; // 顿
+			m_Weight[3] = m_dibang_data[5]; // 百公斤
+			m_Weight[4] = m_dibang_data[6]; // 十公斤
+			m_Weight[5] = m_dibang_data[7]; // 千克
+			// 这里忽略掉后面的4个字节，直接结束。
+			m_Weight[6] = 0x00; // 字符串结束标志
 		}
 	}
+
+	// 新地磅数据处理
+	if(type==2)
+	{
+		// 新地磅数据格式
+		// 02 31 30 20 20 20 20 20 20 20 20 20 20 30 30 0D
+		// 02 开始符号
+		// 31 30 未知作用，会有变化。
+		// 20 20 20 20 20 20 20 20 20 20 重量
+		// 30 30 未知作用，未见变化。
+		// 0D 结束标志
+		
+		int i=0;
+		int j=0;
+		while(m_dibang_data[i]!=0x0D) // 循环数据，直到遇到0x0D
+		{
+			if(m_dibang_data[i]==0x02) // 遇到开始标志 0x02
+			{
+				i+=3; // 跳过三个字符，一般为0x02 0x31 0x30 未知作用。
+			}
+			if(m_dibang_data[i]==0x20) // 如果遇到空格标志 0x20 则忽略
+			{
+				i++;
+			}
+			else
+			{
+				m_Weight[j] = m_dibang_data[i];
+//				printf("char  = 0x%02X\n",m_dibang_data[i]);
+				j++;
+				if(m_dibang_data[i+1]==0x20) // 如果下一个字符为0x20表示已经获取完重量了，后面的数据忽略。
+				{
+					m_Weight[j] = 0x00; // 直接给后一个字符赋值0x00，结束字符串。
+					j=0;
+					break; // 跳出循环，继续执行，以便显示重量
+				}
+				i++;
+			}
+		}
+	}
+
+	
 
 //	printf("m_Weight = %s \n",m_Weight);
 
@@ -560,7 +620,9 @@ void CClientDlg::CalcJinE()
 	}
 
 	CString JinE;
-	JinE.Format(_T("%.1f"),iJinE);
+//	JinE.Format(_T("%.1f"),iJinE);
+	char money[16]={0};
+	sprintf(money,"%.f",iJinE);
 	m_jine.SetWindowText(JinE); // 设置金额
 }
 
