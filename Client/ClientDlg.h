@@ -53,13 +53,12 @@ public:
 		CString m_DianHua; // 电话
 		CString m_HuoWu; // 货物名称
 		CString m_GuiGe; // 货物规格
-		CString m_LiuXiang; // 货物流向
 		CString m_PiZhong; // 皮重
 		CString m_MaoZhong; // 毛重
 		CString m_JingZhong; // 净重
 		CString m_DanJia; // 单价
 		CString m_JinE; // 金额
-		CString m_ChuChang; // 出厂时间
+		CString m_BeiZhu; // 备注
 		CString m_User; // 司磅员
 	};
 	DAYIN DaYin;
@@ -102,7 +101,8 @@ public:
 
 	afx_msg void OnBnClickedButtonCom();
 	afx_msg void OnBnClickedButtonCom1Send();
-	afx_msg void OnBnClickedButtonCom2Send();
+	//afx_msg void OnBnClickedButtonCom2Send();
+	afx_msg void OnBnClickedButtonZhongliang(); // 取重量
 
 	void GetData(char *url, char *para);
 	void PostData(char *url, char *para);
@@ -122,9 +122,12 @@ public:
 	CEdit m_jingzhong;
 	CEdit m_danjia;
 	CEdit m_jine;
+	CButton m_shoudong;
+	CButton m_youhui;
 	CEdit m_zhongliang;
 	CButton m_btn_net;
 	CButton m_btn_login;
+	CListCtrl m_list; // 车辆信息列表
 	afx_msg void OnBnClickedButtonNetConn();
 	afx_msg void OnBnClickedButtonComConn();
 	afx_msg void OnBnClickedButtonLogin();
@@ -160,4 +163,6 @@ public:
 	afx_msg void OnEnChangeEditJingzhong();
 	afx_msg void OnCbnSelchangeComboHuowu();
 	afx_msg void OnCbnSelchangeComboChexing();
+	afx_msg void OnBnClickedCheck1();
+	afx_msg void OnBnClickedCheck2();
 };

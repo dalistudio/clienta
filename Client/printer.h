@@ -36,13 +36,12 @@ public:
 	CString m_DianHua; // 电话
 	CString m_HuoWu; // 货物名称
 	CString m_GuiGe; // 货物规格
-	CString m_LiuXiang; // 货物流向
 	CString m_PiZhong; // 皮重
 	CString m_MaoZhong; // 毛重
 	CString m_JingZhong; // 净重
 	CString m_DanJia; // 单价
 	CString m_JinE; // 金额
-	CString m_ChuChang; // 出厂时间
+	CString m_BeiZhu; // 备注
 	CString m_User; // 司磅员
 	int m_Times; // 过磅次数
 
@@ -50,9 +49,9 @@ public:
 	void PreparePrinting();	//设置字体，根据dc计算一些参数
 	BOOL StartPrinting();
 	void EndPrinting();
-	void PrintHeadLine();	//打印列名行"----编号----姓名----年龄----职称----"
-	void PrintHeader();		//打印页眉,如"武汉利德报表"
-	void PrintFooter();		//打印页脚，如页数信息"第2页/共5页"
+	void PrintHeadLine();	//打印列名行
+	void PrintHeader();		//打印页眉
+	void PrintFooter();		//打印页脚
 	void PrintBody();		//打印一页的内容
 	void StartPage()
 	{

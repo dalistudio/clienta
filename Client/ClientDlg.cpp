@@ -81,11 +81,14 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_JINGZHONG, m_jingzhong);
 	DDX_Control(pDX, IDC_EDIT_DANJIA, m_danjia);
 	DDX_Control(pDX, IDC_EDIT_JINE, m_jine);
+	DDX_Control(pDX, IDC_CHECK1, m_shoudong);
+	DDX_Control(pDX, IDC_CHECK2, m_youhui);
 	DDX_Control(pDX, IDC_EDIT_ZHONGLIANG, m_zhongliang);
 	DDX_Control(pDX, IDC_BUTTON_NET_CONN, m_btn_net);
 	DDX_Control(pDX, IDC_BUTTON_LOGIN, m_btn_login);
 	DDX_Control(pDX, IDC_BUTTON_DAYIN, m_dayin);
 	DDX_Control(pDX, IDC_BUTTON_TIJIAO, m_tijiao);
+	DDX_Control(pDX, IDC_LIST1, m_list); // 车辆信息
 }
 
 BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
@@ -95,6 +98,7 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 
 	ON_MESSAGE(ON_COM_RECEIVE, On_Receive) // 如果收到 ON_COM_RECEIVE 消息，调用接收函数
 	ON_BN_CLICKED(IDC_BUTTON_COM1_SEND, &CClientDlg::OnBnClickedButtonCom1Send)
+	ON_BN_CLICKED(IDC_BUTTON_ZHONGLIANG, &CClientDlg::OnBnClickedButtonZhongliang)
 	ON_BN_CLICKED(IDC_BUTTON_NET_CONN, &CClientDlg::OnBnClickedButtonNetConn)
 	ON_BN_CLICKED(IDC_BUTTON_COM_CONN, &CClientDlg::OnBnClickedButtonComConn)
 	ON_BN_CLICKED(IDC_BUTTON_LOGIN, &CClientDlg::OnBnClickedButtonLogin)
@@ -112,6 +116,8 @@ ON_EN_CHANGE(IDC_EDIT_DANJIA, &CClientDlg::OnEnChangeEditDanjia)
 ON_EN_CHANGE(IDC_EDIT_JINGZHONG, &CClientDlg::OnEnChangeEditJingzhong)
 ON_CBN_SELCHANGE(IDC_COMBO_HUOWU, &CClientDlg::OnCbnSelchangeComboHuowu)
 ON_CBN_SELCHANGE(IDC_COMBO_CHEXING, &CClientDlg::OnCbnSelchangeComboChexing)
+ON_BN_CLICKED(IDC_CHECK1, &CClientDlg::OnBnClickedCheck1)
+ON_BN_CLICKED(IDC_CHECK2, &CClientDlg::OnBnClickedCheck2)
 END_MESSAGE_MAP()
 
 
@@ -220,7 +226,7 @@ BOOL CClientDlg::OnInitDialog()
 	}
 
 	// 设置定时器
-	SetTimer(1,20000,0); // 20秒
+	SetTimer(1,10000,0); // 10秒
 
 	// 连接服务器
 	OnBnClickedButtonNetConn();
@@ -281,6 +287,10 @@ BOOL CClientDlg::OnInitDialog()
 	GetDlgItem(IDC_STATIC_SHOUHUO)->SetFont(m_Font);
 	GetDlgItem(IDC_EDIT_SHOUHUO)->SetFont(m_Font);
 
+	// 余额
+	GetDlgItem(IDC_STATIC_YUE)->SetFont(m_Font);
+	GetDlgItem(IDC_STATIC_YEY)->SetFont(m_Font);
+
 	// 皮重单位
 	GetDlgItem(IDC_STATIC_PZKG)->SetFont(m_Font);
 
@@ -321,6 +331,9 @@ BOOL CClientDlg::OnInitDialog()
 
 	/////////////////////////////////
 
+	// 取重量按钮
+	GetDlgItem(IDC_BUTTON_ZHONGLIANG)->SetFont(m_Font);
+
 	// 提交按钮
 	GetDlgItem(IDC_BUTTON_TIJIAO)->SetFont(m_Font);
 
@@ -338,7 +351,7 @@ BOOL CClientDlg::OnInitDialog()
 	m_huowu.AddString(_T("石粉"));
 	m_huowu.AddString(_T("混合"));
 	m_huowu.AddString(_T("峰石"));
-	m_huowu.AddString(_T("片石"));
+	m_huowu.AddString(_T("二片石"));
 	m_huowu.SetCurSel(0);
 
 	m_guige.AddString(_T("0.5"));
@@ -346,6 +359,29 @@ BOOL CClientDlg::OnInitDialog()
 	m_guige.AddString(_T("1.3"));
 	m_guige.SetCurSel(0);
 
+	///////////////////////////////
+	// 车辆信息列表设置
+	LONG lStyle; 
+	lStyle = GetWindowLong(m_list.m_hWnd, GWL_STYLE);// 获取当前窗口style 
+	lStyle &= ~LVS_TYPEMASK; // 清除显示方式位 
+	lStyle |= LVS_REPORT; // 设置style 
+	SetWindowLong(m_list.m_hWnd, GWL_STYLE, lStyle);// 设置style 
+	DWORD dwStyle = m_list.GetExtendedStyle(); 
+	dwStyle |= LVS_EX_FULLROWSELECT;// 选中某行使整行高亮（只适用与report 风格的listctrl ） 
+	dwStyle |= LVS_EX_GRIDLINES;// 网格线（只适用与report 风格的listctrl ） 
+//	dwStyle |= LVS_EX_CHECKBOXES;//item 前生成checkbox 控件 
+	m_list.SetExtendedStyle(dwStyle); // 设置扩展风格 
+
+	m_list.InsertColumn(0,L"单号",LVCFMT_CENTER,100);
+	m_list.InsertColumn(1,L"车号",LVCFMT_CENTER,80);
+	m_list.InsertColumn(2,L"车型",LVCFMT_CENTER,80);
+	m_list.InsertColumn(3,L"货物名称",LVCFMT_CENTER,80);
+	m_list.InsertColumn(4,L"货物规格",LVCFMT_CENTER,80);
+	m_list.InsertColumn(5,L"联系电话",LVCFMT_CENTER,100);
+	m_list.InsertColumn(6,L"收货单位",LVCFMT_CENTER,200);
+	m_list.InsertColumn(7,L"皮重",LVCFMT_CENTER,100);
+	m_list.InsertColumn(8,L"过磅时间",LVCFMT_CENTER,200);
+	
 	//return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 	return FALSE;
 }
@@ -545,42 +581,6 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 	strWeight.Format(_T("%d"),iWeight2);
 	m_zhongliang.SetWindowText(strWeight+L"KG"); // 实时显示重量
 
-	// 这里应该判断一段时间内重量稳定之后，采用这个重量的值。
-	// 而不是使用最重的值作为最终值。
-	// 其实这里不需要处理，由司磅员决定，然后按提交即可。
-
-	//if(iWeight2>iWeight1) // 这里以最重的值为最终值。
-	//{
-	//	iWeight1 = iWeight2;
-	//}
-
-	USES_CONVERSION;
-	// 设置第一次过磅和第二次过磅的皮重和毛重
-	// 皮重
-	if(m_type == 1)
-	{
-		m_pizhong.SetWindowText(A2W((char*)m_Weight)); // 将值显示在皮重控件中。
-	}
-
-	// 毛重
-	if(m_type == 2)
-	{
-		m_maozhong.SetWindowText(A2W((char*)m_Weight));
-		// 净重 = 毛重 - 皮重 
-		int iJingZhong,iMaoZhong,iPiZhong;
-		CString MaoZhong,PiZhong,JingZhong;
-
-		m_maozhong.GetWindowText(MaoZhong); // 获得毛重
-		iMaoZhong = _ttoi(MaoZhong); // 将毛重转为整数 
-
-		m_pizhong.GetWindowText(PiZhong); // 获得皮重
-		iPiZhong = _ttoi(PiZhong); // 将皮重转为整数 
-
-		iJingZhong = iMaoZhong - iPiZhong; // 计算净重
-		JingZhong.Format(_T("%d"),iJingZhong);
-		m_jingzhong.SetWindowText(JingZhong); // 将值显示在净重控件中。
-		CalcJinE(); // 计算金额
-	}
 	return 0;
 }
 
@@ -620,9 +620,9 @@ void CClientDlg::CalcJinE()
 	}
 
 	CString JinE;
-//	JinE.Format(_T("%.1f"),iJinE);
-	char money[16]={0};
-	sprintf(money,"%.f",iJinE);
+	JinE.Format(_T("%.1f"),iJinE);
+//	char money[16]={0};
+//	sprintf(money,"%.f",iJinE);
 	m_jine.SetWindowText(JinE); // 设置金额
 }
 
@@ -867,7 +867,18 @@ void CClientDlg::OnBnClickedButtonLogout()
 // 保持连接
 void CClientDlg::OnKeepalive()
 {
-	// 无需处理返回的数据。
+	// 在这里处理车辆信息
+	m_list.DeleteAllItems(); // 清空所有内容
+
+	// 分析 JSON 并插入数据
+	int nRow = m_list.InsertItem(0,L"100031");
+	m_list.SetItemText(nRow,1,L"AE1234");
+
+	for(int i=0;i<10;i++)
+	{
+		nRow = m_list.InsertItem(0,L"100032");
+		m_list.SetItemText(nRow,1,L"AC3421");
+	}
 }
 
 // 用户登录
@@ -929,8 +940,8 @@ void CClientDlg::OnLogin()
 void CClientDlg::OnGet1()
 {
 	GetWindow();
-	m_jingzhong.SetReadOnly(TRUE);
-	m_danjia.SetReadOnly(TRUE);
+//	m_jingzhong.SetReadOnly(TRUE);
+//	m_danjia.SetReadOnly(TRUE);
 
 	TOKEN * t = (TOKEN *)malloc(sizeof(TOKEN));
 	TOKEN * l = (TOKEN *)malloc(sizeof(TOKEN));
@@ -982,10 +993,10 @@ void CClientDlg::OnGet1()
 void CClientDlg::OnGet2()
 {
 	SetWindow(); // 禁用所有控件
-	m_jingzhong.EnableWindow(TRUE); // 启用“净重”控件
-	m_danjia.EnableWindow(TRUE); // 启用“单价”控件
-	m_jingzhong.SetReadOnly(FALSE); // 设“净重”为非只读
-	m_danjia.SetReadOnly(FALSE); // 设“单价”为非只读
+//	m_jingzhong.EnableWindow(TRUE); // 启用“净重”控件
+//	m_danjia.EnableWindow(TRUE); // 启用“单价”控件
+//	m_jingzhong.SetReadOnly(FALSE); // 设“净重”为非只读
+//	m_danjia.SetReadOnly(FALSE); // 设“单价”为非只读
 
 
 	// 分析返回数据，并显示出来。
@@ -1058,7 +1069,7 @@ void CClientDlg::OnGet2()
 		MessageBox(_T("服务器错误！！！"),_T("网络连接"));
 
 	m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
-	m_jingzhong.SetFocus(); // 设置净重为焦点
+//	m_jingzhong.SetFocus(); // 设置净重为焦点
 
 //	free(t);
 //	free(l);
@@ -1116,6 +1127,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	CString strHuoWu,strGuiGe; // 货物，规格
 	CString strPiZhong,strMaoZhong,strJingZhong; // 皮重，毛重，净重
 	CString strDanJia,strJinE; // 单价，金额
+	CString strYouHui; // 优惠信息
 
 	m_id.GetWindowText(strDanHao); // 单号
 	m_chehao.GetWindowText(strCheHao); // 车号
@@ -1129,6 +1141,14 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	m_jingzhong.GetWindowText(strJingZhong); // 净重
 	m_danjia.GetWindowText(strDanJia); // 单价
 	m_jine.GetWindowText(strJinE); // 金额
+	if(m_shoudong.GetCheck())
+	{
+		strYouHui = L"手动";
+	}
+	if(m_youhui.GetCheck())
+	{
+		strYouHui = L"优惠";
+	}
 
 	// 如果毛重为空，表示第一次提交
 	if(strMaoZhong.IsEmpty())
@@ -1164,7 +1184,8 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	sprintf(str,"%sPiZhong=%s&MaoZhong=%s&JiangZhong=%s&",str,W2A(strPiZhong),W2A(strMaoZhong),W2A(strJingZhong));
 	if(m_type==1) m_post_id = 4;
 	if(m_type==2) m_post_id = 6;
-	sprintf(str,"%sDanJia=%s&JinE=%s&ZhuangTai=%d&",str,W2A(strDanJia),W2A(strJinE),m_post_id);
+	sprintf(str,"%sDanJia=%s&JinE=%s&ZhuangTai=%d&",str,W2A(strDanJia),W2A(strJinE),m_post_id); // 单价 金额 状态
+	sprintf(str,"%sYouHui=%s&",str,W2A(strYouHui)); // 优惠信息
 
 	CString strUser;
 	m_user.GetWindowText(strUser);
@@ -1190,7 +1211,15 @@ void CClientDlg::OnBnClickedButtonDayin()
 	m_jingzhong.GetWindowText(DaYin.m_JingZhong);
 	m_danjia.GetWindowText(DaYin.m_DanJia);
 	m_jine.GetWindowText(DaYin.m_JinE);
-	// 出厂未定
+	// 备注
+	if(m_shoudong.GetCheck())
+	{
+		DaYin.m_BeiZhu = L"手动";
+	}
+	if(m_youhui.GetCheck())
+	{
+		DaYin.m_BeiZhu = L"优惠";
+	}
 	m_user.GetWindowText(DaYin.m_User);
 
 
@@ -1208,6 +1237,14 @@ void CClientDlg::OnBnClickedButtonDayin()
 	m_jingzhong.SetWindowText(_T("")); // 净重
 	m_danjia.SetWindowText(_T("")); // 单价
 	m_jine.SetWindowText(_T("")); // 金额
+	if(m_shoudong.GetCheck()) // 手动
+	{
+		m_shoudong.SetCheck(FALSE);
+	}
+	if(m_youhui.GetCheck()) // 优惠
+	{
+		m_youhui.SetCheck(FALSE);
+	}
 
 	m_dayin.EnableWindow(FALSE); // 禁用“打印”按钮
 	m_id.SetFocus();
@@ -1333,7 +1370,15 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_jingzhong.GetWindowText(DaYin.m_JingZhong);
 	m_danjia.GetWindowText(DaYin.m_DanJia);
 	m_jine.GetWindowText(DaYin.m_JinE);
-	// 出厂未定
+	// 备注
+	if(m_shoudong.GetCheck())
+	{
+		DaYin.m_BeiZhu = L"手动";
+	}
+	if(m_youhui.GetCheck())
+	{
+		DaYin.m_BeiZhu = L"优惠";
+	}
 	m_user.GetWindowText(DaYin.m_User);
 
 	// 设置石场相关变量
@@ -1350,7 +1395,7 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_printer->m_JingZhong = DaYin.m_JingZhong; // 净重
 	m_printer->m_DanJia = DaYin.m_DanJia; // 单价
 	m_printer->m_JinE = DaYin.m_JinE; // 金额
-	m_printer->m_ChuChang = DaYin.m_ChuChang; // 出厂时间
+	m_printer->m_BeiZhu = DaYin.m_BeiZhu; // 备注
 	m_printer->m_User = DaYin.m_User; // 司磅员
 	m_printer->m_Times  = m_type; // 过磅次数
 	
@@ -1422,7 +1467,7 @@ void CClientDlg::DoPrint()
 		printer->m_JingZhong = DaYin.m_JingZhong; // 净重
 		printer->m_DanJia = DaYin.m_DanJia; // 单价
 		printer->m_JinE = DaYin.m_JinE; // 金额
-		printer->m_ChuChang = DaYin.m_ChuChang; // 出厂时间
+		printer->m_BeiZhu = DaYin.m_BeiZhu; // 备注
 		printer->m_User = DaYin.m_User; // 司磅员
 
 		if(printer->StartPrinting())
@@ -1548,4 +1593,89 @@ void CClientDlg::OnCbnSelchangeComboChexing()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	CalcJinE(); // 计算金额
+}
+
+// 取重量按钮
+void CClientDlg::OnBnClickedButtonZhongliang()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	USES_CONVERSION;
+	// 设置第一次过磅和第二次过磅的皮重和毛重
+	// 皮重
+	if(m_type == 1)
+	{
+		m_pizhong.SetWindowText(A2W((char*)m_Weight)); // 将值显示在皮重控件中。
+	}
+
+	// 毛重
+	if(m_type == 2)
+	{
+		m_maozhong.SetWindowText(A2W((char*)m_Weight)); // 将值显示在毛重控件中。
+		// 净重 = 毛重 - 皮重 
+		int iJingZhong,iMaoZhong,iPiZhong;
+		CString MaoZhong,PiZhong,JingZhong;
+
+		m_maozhong.GetWindowText(MaoZhong); // 获得毛重
+		iMaoZhong = _ttoi(MaoZhong); // 将毛重转为整数 
+
+		m_pizhong.GetWindowText(PiZhong); // 获得皮重
+		iPiZhong = _ttoi(PiZhong); // 将皮重转为整数 
+
+		iJingZhong = iMaoZhong - iPiZhong; // 计算净重
+		JingZhong.Format(_T("%d"),iJingZhong);
+		m_jingzhong.SetWindowText(JingZhong); // 将值显示在净重控件中。
+		CalcJinE(); // 计算金额
+	}
+}
+
+// 点击手动复选框
+void CClientDlg::OnBnClickedCheck1()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	// 1、判断“优惠”复选框是否选择
+	// 2、允许修改“金额”编辑框
+	// 3、备注为“手动”
+	if(m_shoudong.GetCheck() && m_youhui.GetCheck())
+	{
+		m_shoudong.SetCheck(FALSE);
+		MessageBox(L"不能同时选择\"手动\"和\"优惠\"");
+		return;
+	}
+	if(m_shoudong.GetCheck()) // 选中状态
+	{
+		m_jine.EnableWindow(TRUE); // 启用“金额”控件
+		m_jine.SetReadOnly(FALSE); // 设“金额”为非只读
+		m_jine.SetFocus(); // 设置“金额”文本框为焦点
+		// 设置备注为“手动”
+	}
+	else // 未选中状态
+	{
+		m_jine.EnableWindow(FALSE); // 启用“金额”控件
+		m_jine.SetReadOnly(TRUE); // 设“金额”为非只读
+	}
+	
+}
+
+// 点击优惠复选框
+void CClientDlg::OnBnClickedCheck2()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	if(m_shoudong.GetCheck() && m_youhui.GetCheck())
+	{
+		m_youhui.SetCheck(FALSE);
+		MessageBox(L"不能同时选择\"手动\"和\"优惠\"");
+		return;
+	}
+	if( m_youhui.GetCheck()) // 选中状态
+	{
+		m_jine.EnableWindow(TRUE); // 启用“金额”控件
+		m_jine.SetReadOnly(FALSE); // 设“金额”为非只读
+		m_jine.SetFocus(); // 设置“金额”文本框为焦点
+		// 设置备注为“优惠”
+	}
+	else // 未选中状态
+	{
+		m_jine.EnableWindow(FALSE); // 启用“金额”控件
+		m_jine.SetReadOnly(TRUE); // 设“金额”为非只读
+	}
 }

@@ -146,7 +146,7 @@ void CPrinter::PrintBody()
 		bi.CreatePen(PS_SOLID,3,RGB(0,0,0));//创建黑色画笔
 		jbi=m_dc->SelectObject(&bi);//选择画笔
 
-		for(int i=0;i<6;i++)//画水平线, 这里修改行数
+		for(int i=0;i<7;i++)//画水平线, 这里修改行数
 		{
 			//            X    Y
 			m_dc->MoveTo(60,200+i*40);
@@ -156,7 +156,18 @@ void CPrinter::PrintBody()
 		for(int i=0;i<5;i++)//画垂直线
 		{
 			m_dc->MoveTo(60+i*315,200);
-			m_dc->LineTo(60+i*315,240+4*40); // 这里修改列长度
+			if(i==0)
+			{
+				m_dc->LineTo(60+i*315,240+5*40); // 这里修改列长度
+			}
+			else if(i==4)
+			{
+				m_dc->LineTo(60+i*315,240+5*40); // 这里修改列长度
+			}
+			else
+			{
+				m_dc->LineTo(60+i*315,240+4*40); // 这里修改列长度
+			}
 		}
 		m_dc->SelectObject(jbi);
 
@@ -166,21 +177,42 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(395,207,m_CheHao);
 
 		m_dc->TextOut(730,207,CString("皮重"));
-		m_dc->TextOut(1065,207,m_PiZhong+L" KG");
+		if(m_PiZhong.IsEmpty())
+		{
+			m_dc->TextOut(1065,207,m_PiZhong);
+		}
+		else
+		{
+			m_dc->TextOut(1065,207,m_PiZhong+L" KG");
+		}
 
 		// 第二行
 		m_dc->TextOut(80,207+40,CString("车型"));
 		m_dc->TextOut(395,207+40,m_CheXing);
 
 		m_dc->TextOut(730,207+40,CString("毛重"));
-		m_dc->TextOut(1065,207+40,m_MaoZhong+L" KG");
+		if(m_MaoZhong.IsEmpty())
+		{
+			m_dc->TextOut(1065,207+40,m_MaoZhong);
+		}
+		else
+		{
+			m_dc->TextOut(1065,207+40,m_MaoZhong+L" KG");
+		}
 
 		// 第三行
 		m_dc->TextOut(80,207+80,CString("收货单位"));
 		m_dc->TextOut(395,207+80,m_DanWei);
 
 		m_dc->TextOut(730,207+80,CString("净重"));
-		m_dc->TextOut(1065,207+80,m_JingZhong+L" KG");
+		if(m_JingZhong.IsEmpty())
+		{
+			m_dc->TextOut(1065,207+80,m_JingZhong);
+		}
+		else
+		{
+			m_dc->TextOut(1065,207+80,m_JingZhong+L" KG");
+		}
 
 		// 第四行
 		m_dc->TextOut(80,207+120,CString("货物名称"));
@@ -189,11 +221,26 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(730,207+120,CString("单价"));
 		if(m_CheXing.Compare(L"大车")==0)
 		{
-			m_dc->TextOut(1065,207+120,m_DanJia+L" 元/立方");
+			if(m_DanJia.IsEmpty())
+			{
+				m_dc->TextOut(1065,207+120,m_DanJia);
+			}
+			else
+			{
+				m_dc->TextOut(1065,207+120,m_DanJia+L" 元/立方");
+			}
 		}
 		else
 		{
-			m_dc->TextOut(1065,207+120,m_DanJia+L" 元/吨");
+			if(m_DanJia.IsEmpty())
+			{
+				m_dc->TextOut(1065,207+120,m_DanJia);
+			}
+			else
+			{
+				m_dc->TextOut(1065,207+120,m_DanJia+L" 元/吨");
+			}
+			
 		}
 
 		// 第五行
@@ -201,32 +248,37 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(395,207+160,m_GuiGe);
 
 		m_dc->TextOut(730,207+160,CString("金额"));
-		m_dc->TextOut(1065,207+160,m_JinE+L" 元");
+		if(m_JinE.IsEmpty())
+		{
+			m_dc->TextOut(1065,207+160,m_JinE);
+		}
+		else
+		{
+			m_dc->TextOut(1065,207+160,m_JinE+L" 元");
+		}
+		
 
 		// 第六行
-//		m_dc->TextOut(80,207+200,CString("货物流向"));
-//		m_dc->TextOut(395,207+200,m_LiuXiang);
-
-//		m_dc->TextOut(730,207+200,CString("出厂时间"));
-//		m_dc->TextOut(1030,207+200,m_ChuChang);
+		m_dc->TextOut(80,207+200,CString("备注："));
+		m_dc->TextOut(200,207+200,m_BeiZhu);
 
 		// 页脚
 		strDateTime.Format(L"司磅员：%s",m_User);
-		m_dc->TextOut(60,410,strDateTime);
-		m_dc->TextOut(600,410,CString("客户签名："));
-		m_dc->TextOut(1000,410,CString("司机签名："));
+		m_dc->TextOut(60,450,strDateTime);
+		m_dc->TextOut(600,450,CString("客户签名："));
+		m_dc->TextOut(1000,450,CString("司机签名："));
 
 		if(m_Times==1) // 第一次过磅
 		{
-			m_dc->TextOut(60,460,CString("白：存根联"));
-			m_dc->TextOut(375,460,CString("红：进料联"));
+			m_dc->TextOut(60,500,CString("白：存根联"));
+			m_dc->TextOut(375,500,CString("红：进料联"));
 		}
 		if(m_Times==2) // 第二次过磅
 		{
-			m_dc->TextOut(60,460,CString("白：保安联"));
-			m_dc->TextOut(375,460,CString("红：存根联"));
-			m_dc->TextOut(690,460,CString("绿：财务联"));
-			m_dc->TextOut(1005,460,CString("黄：客户联"));
+			m_dc->TextOut(60,500,CString("白：保安联"));
+			m_dc->TextOut(375,500,CString("红：存根联"));
+			m_dc->TextOut(690,500,CString("绿：财务联"));
+			m_dc->TextOut(1005,500,CString("黄：客户联"));
 		}
 
 		// 条形码
