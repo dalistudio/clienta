@@ -35,6 +35,8 @@ public:
 // 实现
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
@@ -47,8 +49,17 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+	ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
+// 左键点击关于对话框时执行
+void CAboutDlg::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	//MessageBox(L"关于");
+	SendMessage(WM_CLOSE);
+	CDialogEx::OnLButtonDown(nFlags, point);
+}
 
 // CClientDlg 对话框
 
@@ -1679,3 +1690,5 @@ void CClientDlg::OnBnClickedCheck2()
 		m_jine.SetReadOnly(TRUE); // 设“金额”为非只读
 	}
 }
+
+
