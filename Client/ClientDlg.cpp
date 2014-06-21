@@ -130,6 +130,7 @@ ON_CBN_SELCHANGE(IDC_COMBO_HUOWU, &CClientDlg::OnCbnSelchangeComboHuowu)
 ON_CBN_SELCHANGE(IDC_COMBO_CHEXING, &CClientDlg::OnCbnSelchangeComboChexing)
 ON_BN_CLICKED(IDC_CHECK1, &CClientDlg::OnBnClickedCheck1)
 ON_BN_CLICKED(IDC_CHECK2, &CClientDlg::OnBnClickedCheck2)
+ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &CClientDlg::OnNMDblclkList1)
 END_MESSAGE_MAP()
 
 
@@ -883,6 +884,10 @@ void CClientDlg::OnBnClickedButtonLogout()
 // 保持连接
 void CClientDlg::OnKeepalive()
 {
+	if(strcmp(conf.aid,"")==0)
+	{
+		return;
+	}
 	// 在这里处理车辆信息
 	TOKEN * t = (TOKEN *)malloc(sizeof(TOKEN));
 	TOKEN * l = (TOKEN *)malloc(sizeof(TOKEN));
@@ -1742,4 +1747,18 @@ void CClientDlg::OnBnClickedCheck2()
 	}
 }
 
-
+// LIST双击事件处理
+void CClientDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	NM_LISTVIEW* pNMListView = (NM_LISTVIEW*)pNMHDR;
+	int nItem = pNMListView->iItem;  // 这就是双击的item的序号
+//	int nSubItem = pNMListView->iSubItem; // 这是对应的子项号
+	CString sText = m_list.GetItemText(nItem, 0);
+	m_list.ModifyStyle(NULL, LVS_SHOWSELALWAYS, 0);
+	m_list.SetItemState(nItem, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+	m_id.SetWindowText(sText); // 设置单号
+	OnBnClickedButtonGet(); // 获得单据信息
+	*pResult = 0;
+}

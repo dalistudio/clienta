@@ -166,4 +166,5 @@ public:
 	afx_msg void OnCbnSelchangeComboChexing();
 	afx_msg void OnBnClickedCheck1();
 	afx_msg void OnBnClickedCheck2();
+	afx_msg void OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult);
 };
