@@ -92,6 +92,7 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_JINGZHONG, m_jingzhong);
 	DDX_Control(pDX, IDC_EDIT_DANJIA, m_danjia);
 	DDX_Control(pDX, IDC_EDIT_JINE, m_jine);
+	DDX_Control(pDX, IDC_EDIT_YUE, m_yue);
 	DDX_Control(pDX, IDC_CHECK1, m_shoudong);
 	DDX_Control(pDX, IDC_CHECK2, m_youhui);
 	DDX_Control(pDX, IDC_EDIT_ZHONGLIANG, m_zhongliang);
@@ -339,6 +340,10 @@ BOOL CClientDlg::OnInitDialog()
 	// 金额
 	GetDlgItem(IDC_STATIC_JINE)->SetFont(m_Font);
 	GetDlgItem(IDC_EDIT_JINE)->SetFont(m_Font);
+
+	// 余额
+	GetDlgItem(IDC_STATIC_YUE)->SetFont(m_Font);
+	GetDlgItem(IDC_EDIT_YUE)->SetFont(m_Font);
 
 	/////////////////////////////////
 
@@ -662,8 +667,8 @@ void CClientDlg::OnConnected()
 // 接收网络数据
 void CClientDlg::OnRvc()
 {
-	memset(&m_net_rvc_data,0,1025);
-	m_net_rvc_len = m_Conn.Receive(m_net_rvc_data,1024);
+	memset(&m_net_rvc_data,0,10240);
+	m_net_rvc_len = m_Conn.Receive(m_net_rvc_data,10239);
 	if (SOCKET_ERROR != m_net_rvc_len)
 	{
 		printf("%s\n",m_net_rvc_data);
@@ -879,16 +884,60 @@ void CClientDlg::OnBnClickedButtonLogout()
 void CClientDlg::OnKeepalive()
 {
 	// 在这里处理车辆信息
-	m_list.DeleteAllItems(); // 清空所有内容
+	TOKEN * t = (TOKEN *)malloc(sizeof(TOKEN));
+	TOKEN * l = (TOKEN *)malloc(sizeof(TOKEN));
 
-	// 分析 JSON 并插入数据
-	int nRow = m_list.InsertItem(0,L"100031");
-	m_list.SetItemText(nRow,1,L"AE1234");
-
-	for(int i=0;i<10;i++)
+	char *tStr ,*lStr;
+	tStr = strtoken(t,(char*)&m_net_rvc_data,"\r\n"); // 响应行
+	lStr = strtoken(l,(char*)tStr," "); // HTTP/1.1
+	lStr = strtoken(l,NULL," "); // 200 
+	if(strcmp(lStr,"200")==0)
 	{
-		nRow = m_list.InsertItem(0,L"100032");
-		m_list.SetItemText(nRow,1,L"AC3421");
+		while(t->data!=NULL)
+		{
+			tStr = strtoken(t,NULL, "\r\n");
+			if(strcmp(tStr,"")==0) // 空行
+			{
+				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体长度
+				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体内容
+				break;
+			}
+		}
+		if(strcmp(tStr,"")==0) // 如果返回的数据为空
+		{
+			MessageBox(L"无车辆信息!!!",L"数据库");
+		}
+		else
+		{
+			USES_CONVERSION;  // dali
+			cJSON *jsonroot = cJSON_Parse(tStr); //json根
+			if(jsonroot)
+			{
+				m_list.DeleteAllItems(); // 清空所有内容
+				int size = cJSON_GetArraySize(jsonroot); // 获得数组的长度
+				for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
+				{
+					cJSON* node;
+					node = cJSON_GetArrayItem(jsonroot,i);
+
+					// 分析 JSON 并插入数据
+					int nRow = m_list.InsertItem(0,A2CW(cJSON_GetObjectItem(node,"id")->valuestring));
+					m_list.SetItemText(nRow,1,A2CW(UTF8ToEncode(cJSON_GetObjectItem(node,"ch")->valuestring)));
+					m_list.SetItemText(nRow,2,A2CW(UTF8ToEncode(cJSON_GetObjectItem(node,"cx")->valuestring)));
+					m_list.SetItemText(nRow,3,A2CW(UTF8ToEncode(cJSON_GetObjectItem(node,"hw")->valuestring)));
+					m_list.SetItemText(nRow,4,A2CW(UTF8ToEncode(cJSON_GetObjectItem(node,"gg")->valuestring)));
+					m_list.SetItemText(nRow,5,A2CW(UTF8ToEncode(cJSON_GetObjectItem(node,"dh")->valuestring)));
+					m_list.SetItemText(nRow,6,A2CW(UTF8ToEncode(cJSON_GetObjectItem(node,"dw")->valuestring)));
+					m_list.SetItemText(nRow,7,A2CW(UTF8ToEncode(cJSON_GetObjectItem(node,"pz")->valuestring)));
+					m_list.SetItemText(nRow,8,A2CW(UTF8ToEncode(cJSON_GetObjectItem(node,"gb")->valuestring)));
+				}
+			}
+			else
+			{
+				MessageBox(L"服务器返回车辆信息错误！",L"服务器");
+			}
+			cJSON_Delete(jsonroot);
+		}
 	}
 }
 
@@ -1047,6 +1096,7 @@ void CClientDlg::OnGet2()
 			m_jingzhong.SetWindowText(_T("")); // 净重
 			m_danjia.SetWindowText(_T("")); // 单价
 			m_jine.SetWindowText(_T("")); // 金额
+			m_yue.SetWindowText(_T("")); // 余额
 
 			m_dayin.EnableWindow(FALSE); // 禁用“打印”按钮
 			m_id.SetFocus();
@@ -1069,6 +1119,7 @@ void CClientDlg::OnGet2()
 				m_danjia.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dj")->valuestring))); // 单价
 				m_midu = atof(cJSON_GetObjectItem(jsonroot,"md")->valuestring); // 密度
 				m_jine.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"je")->valuestring))); // 金额
+				m_yue.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"ye")->valuestring))); // 余额
 				m_post_id = 6; // 第二次提交
 			}
 			cJSON_Delete(jsonroot);

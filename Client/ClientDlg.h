@@ -65,7 +65,7 @@ public:
 	
 	int len;
 	int m_post_id; // 提交的编号，用于区分不同提交。
-	char m_net_rvc_data[1025]; // 接收到的数据
+	char m_net_rvc_data[10240]; // 接收到的数据
 	int m_net_rvc_len; // 接收到的数据长度
 
 	unsigned char m_dibang_data[32]; // 地磅数据
@@ -122,6 +122,7 @@ public:
 	CEdit m_jingzhong;
 	CEdit m_danjia;
 	CEdit m_jine;
+	CEdit m_yue;
 	CButton m_shoudong;
 	CButton m_youhui;
 	CEdit m_zhongliang;
