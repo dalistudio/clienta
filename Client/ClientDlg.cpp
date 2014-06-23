@@ -620,7 +620,8 @@ void CClientDlg::CalcJinE()
 	int iDanJia = _ttoi(DanJia); // 转换类型
 
 	// 计算吨数 和 金额
-	float iDun, iJinE;
+	float iDun =0;
+	float iJinE=0;
 	iDun = (float)((float)iJingZhong/1000); // 吨 = 千克/1000
 
 //	if(CheXing.Compare(L"大车")==0)
@@ -639,20 +640,23 @@ void CClientDlg::CalcJinE()
 		GetDlgItem(IDC_STATIC_Dun)->SetWindowText(L"元/吨");
 	}
 
-	// 四舍五入个位数到十位数
-	int a = 0;
-	int b = 0;
-	a = (int)iJinE; // 强制浮点转整数，舍去小数部分，非四舍五入
-	b=a%10;//求余数,得到最后一位  
-	if (b>=5) // 五入
-		a=(a/10+1)*10; // 十位加一,乘于十倍
-	else // 四舍
-		a=(a/10)*10; // 舍去个位,乘于十倍
-	/////////////////////////////
+	if(iJinE > 0)
+	{
+		// 四舍五入个位数到十位数
+		int a = 0;
+		int b = 0;
+		a = (int)iJinE; // 强制浮点转整数，舍去小数部分，非四舍五入
+		b=a%10;//求余数,得到最后一位  
+		if (b>=5) // 五入
+			a=(a/10+1)*10; // 十位加一,乘于十倍
+		else // 四舍
+			a=(a/10)*10; // 舍去个位,乘于十倍
+		/////////////////////////////
 
-	CString JinE;
-	JinE.Format(_T("%d"),a);
-	m_jine.SetWindowText(JinE); // 设置金额
+		CString JinE;
+		JinE.Format(_T("%d"),a);
+		m_jine.SetWindowText(JinE); // 设置金额
+	}
 }
 
 void CClientDlg::OnBnClickedButtonCom1Send()
