@@ -90,6 +90,7 @@ public:
 	int iWeight1,iWeight2;
 	int m_type; // 第一次或第二次过磅的类型 1为第一次 2位第二次
 	float m_midu; // 密度
+	CString m_danjiadanwei; // 单价单位
 
 	CONF conf;
 	// 车型
@@ -167,4 +168,5 @@ public:
 	afx_msg void OnBnClickedCheck1();
 	afx_msg void OnBnClickedCheck2();
 	afx_msg void OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedButtonQuxiao();
 };

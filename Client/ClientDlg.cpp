@@ -131,6 +131,7 @@ ON_CBN_SELCHANGE(IDC_COMBO_CHEXING, &CClientDlg::OnCbnSelchangeComboChexing)
 ON_BN_CLICKED(IDC_CHECK1, &CClientDlg::OnBnClickedCheck1)
 ON_BN_CLICKED(IDC_CHECK2, &CClientDlg::OnBnClickedCheck2)
 ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &CClientDlg::OnNMDblclkList1)
+ON_BN_CLICKED(IDC_BUTTON_QUXIAO, &CClientDlg::OnBnClickedButtonQuxiao)
 END_MESSAGE_MAP()
 
 
@@ -610,8 +611,8 @@ void CClientDlg::CalcJinE()
 	int iJingZhong = _ttoi(JingZhong);
 
 	// 获得车型
-	CString CheXing;
-	m_chexing.GetWindowText(CheXing);
+//	CString CheXing;
+//	m_chexing.GetWindowText(CheXing);
 
 	// 获得单价
 	CString DanJia;
@@ -622,14 +623,16 @@ void CClientDlg::CalcJinE()
 	float iDun, iJinE;
 	iDun = (float)((float)iJingZhong/1000); // 吨 = 千克/1000
 
-	if(CheXing.Compare(L"大车")==0)
+//	if(CheXing.Compare(L"大车")==0)
+	if(m_danjiadanwei.Compare(L"立方")==0)
 	{
 		// 按立方计算
 		float LiFang = iDun / m_midu; // 立方 = 吨/密度
 		iJinE = iDanJia * LiFang; // 金额 = 单价 * 立方
 		GetDlgItem(IDC_STATIC_Dun)->SetWindowText(L"元/立方");
 	}
-	else if(CheXing.Compare(L"小车")==0)
+//	else if(CheXing.Compare(L"小车")==0)
+	else if(m_danjiadanwei.Compare(L"吨")==0)
 	{
 		// 按吨计算
 		iJinE = iDanJia * iDun; // 金额 = 单价 * 吨
@@ -637,7 +640,8 @@ void CClientDlg::CalcJinE()
 	}
 
 	// 四舍五入个位数到十位数
-	int a,b;
+	int a = 0;
+	int b = 0;
 	a = (int)iJinE; // 强制浮点转整数，舍去小数部分，非四舍五入
 	b=a%10;//求余数,得到最后一位  
 	if (b>=5) // 五入
@@ -733,7 +737,17 @@ void CClientDlg::GetData(char *url, char *para)
 		strcat(Data,"\r\n");
 	}
 	strcat(Data,"\r\n");
-	m_Conn.Send(Data,strlen(Data));
+
+	if(m_Conn.Send(Data,strlen(Data))==SOCKET_ERROR) // 如果发送返回-1，表示错误
+	{
+		if(GetLastError()==WSAEWOULDBLOCK)
+		{
+		}
+		else
+		{
+			m_Conn.Close(); // 关闭连接
+		}
+	}
 	printf("%s\n",Data);
 }
 
@@ -764,7 +778,17 @@ void CClientDlg::PostData(char *url, char *para)
 	strcat(Data,"\r\n");
 	strcat(Data,"\r\n");
 	strcat(Data,para);
-	m_Conn.Send(Data,strlen(Data));
+
+	if(m_Conn.Send(Data,strlen(Data))==SOCKET_ERROR) // 如果发送返回-1，表示错误
+	{
+		if(GetLastError()==WSAEWOULDBLOCK)
+		{
+		}
+		else
+		{
+			m_Conn.Close(); // 关闭连接
+		}
+	}
 	printf("%s\n",Data);
 }
 
@@ -860,6 +884,7 @@ void CClientDlg::OnBnClickedButtonComConn()
 void CClientDlg::OnBnClickedButtonLogin()
 {
 	// TODO: 在此添加控件通知处理程序代码
+
 	USES_CONVERSION; // dali
 	m_post_id = 2; // 提交ID为2
 	char Data[256] ={0};
@@ -1130,6 +1155,7 @@ void CClientDlg::OnGet2()
 				m_maozhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"mz")->valuestring)); // 毛重
 				m_jingzhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"jz")->valuestring)); // 净重
 				m_danjia.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dj")->valuestring))); // 单价
+				m_danjiadanwei = (A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"djdw")->valuestring))); // 单价单位
 				m_midu = atof(cJSON_GetObjectItem(jsonroot,"md")->valuestring); // 密度
 				m_jine.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"je")->valuestring))); // 金额
 				m_yue.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"ye")->valuestring))); // 余额
@@ -1312,6 +1338,7 @@ void CClientDlg::OnBnClickedButtonDayin()
 	m_jingzhong.SetWindowText(_T("")); // 净重
 	m_danjia.SetWindowText(_T("")); // 单价
 	m_jine.SetWindowText(_T("")); // 金额
+	m_yue.SetWindowText(_T("")); // 余额
 	if(m_shoudong.GetCheck()) // 手动
 	{
 		m_shoudong.SetCheck(FALSE);
@@ -1769,4 +1796,31 @@ void CClientDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	m_id.SetWindowText(sText); // 设置单号
 	OnBnClickedButtonGet(); // 获得单据信息
 	*pResult = 0;
+}
+
+// 取消按钮
+void CClientDlg::OnBnClickedButtonQuxiao()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	SetWindow(); // 禁用所有控件
+	m_id.EnableWindow(TRUE); // 启用单号控件
+	m_id.SetWindowText(_T("")); // 单号
+	m_chehao.SetWindowText(_T("")); // 车号
+	m_dianhua.SetWindowText(_T("")); // 电话
+	m_shouhuo.SetWindowText(_T("")); // 收货单位
+	m_guige.SetWindowText(_T("")); // 货物规格
+	m_pizhong.SetWindowText(_T("")); // 皮重
+	m_maozhong.SetWindowText(_T("")); // 毛重
+	m_jingzhong.SetWindowText(_T("")); // 净重
+	m_danjia.SetWindowText(_T("")); // 单价
+	m_jine.SetWindowText(_T("")); // 金额
+	m_yue.SetWindowText(_T("")); // 余额
+	if(m_shoudong.GetCheck()) // 手动
+	{
+		m_shoudong.SetCheck(FALSE);
+	}
+	if(m_youhui.GetCheck()) // 优惠
+	{
+		m_youhui.SetCheck(FALSE);
+	}
 }
