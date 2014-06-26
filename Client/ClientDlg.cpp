@@ -717,6 +717,9 @@ void CClientDlg::OnRvc()
 void CClientDlg::OnClose()
 {
 	m_Conn.Close();
+	m_btn_net.SetWindowText(_T("重新连接(&R)..."));
+	m_btn_net.EnableWindow(TRUE);
+//	MessageBox(L"连接断开~~");
 }
 
 void CClientDlg::GetData(char *url, char *para)
@@ -744,15 +747,30 @@ void CClientDlg::GetData(char *url, char *para)
 
 	if(m_Conn.Send(Data,strlen(Data))==SOCKET_ERROR) // 如果发送返回-1，表示错误
 	{
-		if(GetLastError()==WSAEWOULDBLOCK)
+		DWORD err = GetLastError();
+		switch(err)
 		{
-		}
-		else
-		{
-			m_Conn.Close(); // 关闭连接
-		}
+		case WSAEWOULDBLOCK: 
+			// 不处理
+			break;
+		case WSAENOTCONN: // 不能连接
+			OnClose(); // 关闭连接
+			printf("无法连接服务器。\n");
+//			OnBnClickedButtonNetConn(); // 重新连接
+			break;
+		case WSAENOTSOCK: // 未创建Socket
+//			OnClose(); // 关闭连接
+			printf("未创建Socket。\n");
+			OnBnClickedButtonNetConn(); // 重新连接
+			break;
+//		default:
+			
+		};
 	}
-	printf("%s\n",Data);
+	else
+	{
+		printf("%s\n",Data);
+	}
 }
 
 void CClientDlg::PostData(char *url, char *para)
@@ -1017,6 +1035,12 @@ void CClientDlg::OnLogin()
 					strcpy(conf.aid,cStr); // 设置AID的值
 				}	
 			}
+			if(strcmp(tStr,"")==0) // 空行
+			{
+				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体长度
+				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体内容
+				break;
+			}
 		} // while
 
 		if(strcmp(conf.sid,"") > 0 && strcmp(conf.aid,"")>0)
@@ -1029,6 +1053,22 @@ void CClientDlg::OnLogin()
 			m_btn_login.EnableWindow(FALSE); // 禁用登录按钮
 			m_id.EnableWindow(TRUE); // 启用单号控件
 			m_id.SetFocus(); // 设置单号为焦点
+
+			// 这里处理会员名称
+			USES_CONVERSION;  // dali
+			cJSON *jsonroot = cJSON_Parse(tStr); //json根
+			if(jsonroot)
+			{
+				int size = cJSON_GetArraySize(jsonroot); // 获得数组的长度
+				for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
+				{
+					cJSON* node;
+					node = cJSON_GetArrayItem(jsonroot,i);
+					m_shouhuo.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加会员名称到单位控件下
+				}
+				m_shouhuo.SetCurSel(0);
+			}
+			cJSON_Delete(jsonroot);
 			
 		}
 		else
@@ -1168,8 +1208,8 @@ void CClientDlg::OnGet2()
 			cJSON_Delete(jsonroot);
 		}
 	}
-	if(strcmp(lStr,"400")==0)
-		MessageBox(_T("文件没有找到！"),_T("网络连接"));
+	if(strcmp(lStr,"404")==0)
+		MessageBox(_T("文件没有找到！\n服务程序出问题了！"),_T("网络连接"));
 	if(strcmp(lStr,"500")==0)
 		MessageBox(_T("服务器错误！！！"),_T("网络连接"));
 
@@ -1186,6 +1226,7 @@ void CClientDlg::OnPost1()
 //	MessageBox(L"第一次过磅");
 	// 判断第一次提交是否正确
 	// 如果正确就跳转到“打印”按钮
+	MessageBox(L"提交成功");
 	m_dayin.EnableWindow(TRUE); // 启用“打印”按钮
 	m_tijiao.EnableWindow(FALSE); // 禁用“提交”按钮
 	m_dayin.SetFocus();
@@ -1197,6 +1238,7 @@ void CClientDlg::OnPost2()
 //	MessageBox(L"第二次过磅");
 	// 判断第二次提交是否正确
 	// 如果正确就跳转到“打印”按钮
+	MessageBox(L"提交成功");
 	m_dayin.EnableWindow(TRUE); // 启用“打印”按钮
 	m_tijiao.EnableWindow(FALSE); // 禁用“提交”按钮
 	m_dayin.SetFocus();

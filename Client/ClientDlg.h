@@ -117,7 +117,7 @@ public:
 	CEdit m_id;
 	CEdit m_chehao;
 	CEdit m_dianhua;
-	CEdit m_shouhuo;
+	CComboBox m_shouhuo;
 	CEdit m_pizhong;
 	CEdit m_maozhong;
 	CEdit m_jingzhong;
