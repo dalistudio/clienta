@@ -140,6 +140,7 @@ public:
 	void OnGet2(); // 第二次获得ID
 	void OnPost1(); // 第一次提交表单
 	void OnPost2(); // 第二次提交表单
+	void OnGuiGe(); // 获得指定货物的规格列表
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnBnClickedButtonTijiao();
 	CButton m_dayin;

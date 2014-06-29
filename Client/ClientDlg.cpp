@@ -13,6 +13,7 @@
 #include "PrintView.h"
 #include "printer.h"
 #include <memory>
+#include <Afxtempl.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -363,7 +364,7 @@ BOOL CClientDlg::OnInitDialog()
 	m_chexing.AddString(_T("大车"));
 	m_chexing.AddString(_T("小车"));
 	m_chexing.SetCurSel(0); // 选择第一项“大车”
-
+/*
 	m_huowu.AddString(_T("青石"));
 	m_huowu.AddString(_T("半青石"));
 	m_huowu.AddString(_T("石粉"));
@@ -376,7 +377,7 @@ BOOL CClientDlg::OnInitDialog()
 	m_guige.AddString(_T("1.2"));
 	m_guige.AddString(_T("1.3"));
 	m_guige.SetCurSel(0);
-
+*/
 	///////////////////////////////
 	// 车辆信息列表设置
 	LONG lStyle; 
@@ -709,6 +710,9 @@ void CClientDlg::OnRvc()
 		case 6: // 第二次过磅单
 			OnPost2();
 			break;
+		case 8: // 获得指定货物规格列表
+			OnGuiGe();
+			break;
 		}
 	}
 }
@@ -761,7 +765,7 @@ void CClientDlg::GetData(char *url, char *para)
 		case WSAENOTSOCK: // 未创建Socket
 //			OnClose(); // 关闭连接
 			printf("未创建Socket。\n");
-			OnBnClickedButtonNetConn(); // 重新连接
+//			OnBnClickedButtonNetConn(); // 重新连接
 			break;
 //		default:
 			
@@ -1059,11 +1063,58 @@ void CClientDlg::OnLogin()
 			cJSON *jsonroot = cJSON_Parse(tStr); //json根
 			if(jsonroot)
 			{
-				int size = cJSON_GetArraySize(jsonroot); // 获得数组的长度
+				// 获取货物名称和规格
+				CList<CString ,CString> list; // 链表
+				cJSON *type = cJSON_GetObjectItem(jsonroot,"type");
+				cJSON *next = type->child; // type的子项
+				while(next->next != NULL) // type的下一项为空
+				{
+					char * strHuoWu = next->string; // 货物名称
+//					char * strGuiGe = next->valuestring; // 货物规格
+					next = next->next; // 移动到type的下一项
+					//printf("HuoWu:%s = GuiGe:%s\n",UTF8ToEncode(strHuoWu),UTF8ToEncode(strGuiGe));
+					if(list.IsEmpty()) // 如果链表为空
+					{
+						list.AddTail(A2CW(UTF8ToEncode(strHuoWu))); // 添加到链表尾
+						m_huowu.AddString(A2CW(UTF8ToEncode(strHuoWu)));
+					}
+					else // 否则循环是否相同
+					{
+						POSITION pos = list.GetHeadPosition(); // 获得链表的头位置
+						CString pstr1 = A2CW(UTF8ToEncode(strHuoWu));
+						CString pstr2;
+						int isa = 0;
+						while(pos != NULL)   
+						{   
+							pstr2 = list.GetNext(pos); // 获得内容
+							if(pstr1.Compare(pstr2)==0)
+							{
+								isa = 1;
+							}
+						}
+						if(isa==0)
+						{
+							list.AddTail(pstr1); // 添加到链表尾
+							m_huowu.AddString(pstr1);
+						}
+						
+					}
+				}
+				m_huowu.SetCurSel(0); // 货物名称选择第一个项
+				// 这里应该发送 HTTP 请求获得第一次项货物的规格列表
+				CString strHuoWu; 
+				m_huowu.GetWindowText(strHuoWu);
+				strHuoWu = L"huowu=" + strHuoWu;
+				m_post_id = 8;
+				GetData("/getguige.php",W2A(strHuoWu));
+				
+				// 获取成员名称
+				cJSON *member = cJSON_GetObjectItem(jsonroot,"member");
+				int size = cJSON_GetArraySize(member); // 获得数组的长度
 				for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
 				{
 					cJSON* node;
-					node = cJSON_GetArrayItem(jsonroot,i);
+					node = cJSON_GetArrayItem(member,i);
 					m_shouhuo.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加会员名称到单位控件下
 				}
 				m_shouhuo.SetCurSel(0);
@@ -1244,6 +1295,60 @@ void CClientDlg::OnPost2()
 	m_dayin.SetFocus();
 }
 
+// 获得指定货物的规格列表
+void CClientDlg::OnGuiGe()
+{
+		// 分析返回数据，并显示出来。
+	TOKEN * t = (TOKEN *)malloc(sizeof(TOKEN));
+	TOKEN * l = (TOKEN *)malloc(sizeof(TOKEN));
+
+	char *tStr;
+	char *lStr;
+	tStr = strtoken(t,(char*)&m_net_rvc_data,"\r\n"); // 响应行
+	lStr = strtoken(l,(char*)tStr," "); // HTTP/1.1
+	lStr = strtoken(l,NULL," "); // 200 
+	if(strcmp(lStr,"200")==0)
+	{
+		while(t->data!=NULL)
+		{
+			tStr = strtoken(t,NULL, "\r\n");
+			if(strcmp(tStr,"")==0) // 空行
+			{
+				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体长度
+				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体内容
+				break;
+			}
+		}
+		if(strcmp(tStr,"")==0) // 如果返回的数据为空
+		{
+
+		}
+		else
+		{
+			USES_CONVERSION;  // dali
+			cJSON *jsonroot = cJSON_Parse(tStr); //json根
+			if(jsonroot)
+			{
+				int size = cJSON_GetArraySize(jsonroot); // 获得数组的长度
+				for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
+				{
+					cJSON* node;
+					node = cJSON_GetArrayItem(jsonroot,i);
+					m_guige.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加规格到控件下
+				}
+				m_guige.SetCurSel(0);
+				
+			}
+			cJSON_Delete(jsonroot);
+			
+		}
+	}
+	if(strcmp(lStr,"404")==0)
+		MessageBox(_T("文件没有找到！\n服务程序出问题了！"),_T("网络连接"));
+	if(strcmp(lStr,"500")==0)
+		MessageBox(_T("服务器错误！！！"),_T("网络连接"));
+}
+
 // 定时器
 void CClientDlg::OnTimer(UINT_PTR nIDEvent)
 {
@@ -1288,13 +1393,14 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	m_jingzhong.GetWindowText(strJingZhong); // 净重
 	m_danjia.GetWindowText(strDanJia); // 单价
 	m_jine.GetWindowText(strJinE); // 金额
+	strYouHui = L"";
 	if(m_shoudong.GetCheck())
 	{
-		strYouHui = L"手动";
+		strYouHui += L"手动皮重 ";
 	}
 	if(m_youhui.GetCheck())
 	{
-		strYouHui = L"优惠";
+		strYouHui += L"优惠金额 ";
 	}
 
 	// 如果毛重为空，表示第一次提交
@@ -1359,13 +1465,14 @@ void CClientDlg::OnBnClickedButtonDayin()
 	m_danjia.GetWindowText(DaYin.m_DanJia);
 	m_jine.GetWindowText(DaYin.m_JinE);
 	// 备注
+	DaYin.m_BeiZhu = L"";
 	if(m_shoudong.GetCheck())
 	{
-		DaYin.m_BeiZhu = L"手动";
+		DaYin.m_BeiZhu += L"手动皮重 ";
 	}
 	if(m_youhui.GetCheck())
 	{
-		DaYin.m_BeiZhu = L"优惠";
+		DaYin.m_BeiZhu += L"优惠金额 ";
 	}
 	m_user.GetWindowText(DaYin.m_User);
 
@@ -1479,7 +1586,7 @@ void CClientDlg::OnBnClickedButtonGet()
 	}
 }
 
-
+// 编辑按钮
 void CClientDlg::OnBnClickedButtonEdit()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -1519,13 +1626,14 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_danjia.GetWindowText(DaYin.m_DanJia);
 	m_jine.GetWindowText(DaYin.m_JinE);
 	// 备注
+	DaYin.m_BeiZhu = L"";
 	if(m_shoudong.GetCheck())
 	{
-		DaYin.m_BeiZhu = L"手动";
+		DaYin.m_BeiZhu += L"手动皮重 ";
 	}
 	if(m_youhui.GetCheck())
 	{
-		DaYin.m_BeiZhu = L"优惠";
+		DaYin.m_BeiZhu += L"优惠金额 ";
 	}
 	m_user.GetWindowText(DaYin.m_User);
 
@@ -1711,6 +1819,8 @@ void CClientDlg::OnEnChangeEditJingzhong()
 void CClientDlg::OnCbnSelchangeComboHuowu()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	// 当修改货物时，发送HTTP请求，获得指定货物的所有规格
+/*
 	CString HuoWu;
 	m_huowu.GetWindowText(HuoWu); // 获得货物的名称
 	if(HuoWu.Compare(L"青石")==0)
@@ -1734,6 +1844,17 @@ void CClientDlg::OnCbnSelchangeComboHuowu()
 	m_guige.ResetContent();
 	m_guige.AddString(_T("0"));
 	m_guige.SetCurSel(0);
+*/
+	m_guige.ResetContent();
+	
+	USES_CONVERSION;
+	CString strHuoWu; 
+
+	int pos = m_huowu.GetCurSel(); // 获得当前选项的序号
+	m_huowu.GetLBText(pos,strHuoWu); // 获得指定序号的文字
+	strHuoWu = L"huowu=" + strHuoWu;
+	m_post_id = 8;
+	GetData("/getguige.php",W2A(strHuoWu));
 }
 
 // 修改车型
@@ -1783,23 +1904,23 @@ void CClientDlg::OnBnClickedCheck1()
 	// 1、判断“优惠”复选框是否选择
 	// 2、允许修改“金额”编辑框
 	// 3、备注为“手动”
-	if(m_shoudong.GetCheck() && m_youhui.GetCheck())
-	{
-		m_shoudong.SetCheck(FALSE);
-		MessageBox(L"不能同时选择\"手动\"和\"优惠\"");
-		return;
-	}
+//	if(m_shoudong.GetCheck() && m_youhui.GetCheck())
+//	{
+//		m_shoudong.SetCheck(FALSE);
+//		MessageBox(L"不能同时选择\"手动\"和\"优惠\"");
+//		return;
+//	}
 	if(m_shoudong.GetCheck()) // 选中状态
 	{
-		m_jine.EnableWindow(TRUE); // 启用“金额”控件
-		m_jine.SetReadOnly(FALSE); // 设“金额”为非只读
-		m_jine.SetFocus(); // 设置“金额”文本框为焦点
+		m_pizhong.EnableWindow(TRUE); // 启用“皮重”控件
+		m_pizhong.SetReadOnly(FALSE); // 设“皮重”为非只读
+		m_pizhong.SetFocus(); // 设置“皮重”文本框为焦点
 		// 设置备注为“手动”
 	}
 	else // 未选中状态
 	{
-		m_jine.EnableWindow(FALSE); // 启用“金额”控件
-		m_jine.SetReadOnly(TRUE); // 设“金额”为非只读
+		m_pizhong.EnableWindow(FALSE); // 启用“皮重”控件
+		m_pizhong.SetReadOnly(TRUE); // 设“皮重”为非只读
 	}
 	
 }
@@ -1808,12 +1929,12 @@ void CClientDlg::OnBnClickedCheck1()
 void CClientDlg::OnBnClickedCheck2()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	if(m_shoudong.GetCheck() && m_youhui.GetCheck())
-	{
-		m_youhui.SetCheck(FALSE);
-		MessageBox(L"不能同时选择\"手动\"和\"优惠\"");
-		return;
-	}
+//	if(m_shoudong.GetCheck() && m_youhui.GetCheck())
+//	{
+//		m_youhui.SetCheck(FALSE);
+//		MessageBox(L"不能同时选择\"手动\"和\"优惠\"");
+//		return;
+//	}
 	if( m_youhui.GetCheck()) // 选中状态
 	{
 		m_jine.EnableWindow(TRUE); // 启用“金额”控件
