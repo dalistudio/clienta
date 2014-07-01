@@ -8,9 +8,9 @@
 #include <memory>
 #include "Com_class.h"
 #include "io.h"
-#include "MySock.h"
 #include "printer.h"
 #include "Resource.h"
+#include "../curl/include/curl/curl.h"
 
 // CClientDlg 对话框
 class CClientDlg : public CDialogEx
@@ -19,11 +19,6 @@ class CClientDlg : public CDialogEx
 public:
 	CClientDlg(CWnd* pParent = NULL);	// 标准构造函数
 	LRESULT On_Receive(WPARAM wp, LPARAM lp); // 接收串口的消息，并处理
-
-	void OnConnected(); // 连接Socket服务器
-	void OnRvc(); // 接收 Socket 数据
-	void OnClose(); // 关闭 Socket 连接
-	CMySock m_Conn; // 
 
 // 对话框数据
 	enum { IDD = IDD_CLIENT_DIALOG };
@@ -37,11 +32,6 @@ public:
 		short port; // 端口
 		short com1_id; // 串口1的编号
 		char com1_para[64]; // 串口1的参数
-		short com2_id; // 串口2的编号
-		char com2_para[64]; // 串口2的参数
-		char cookie[256]; // Cookie
-		char sid[256]; // 会话ID
-		char aid[256]; // 身份ID
 	};
 
 	struct DAYIN{
@@ -76,7 +66,7 @@ public:
 protected:
 	HICON m_hIcon;
 	_thread_com com1; // 创建串口1
-	_thread_com com2; // 创建串口2
+//	_thread_com com2; // 创建串口2
 	CString	m_e;
 
 	// 生成的消息映射函数
@@ -102,15 +92,11 @@ public:
 
 	afx_msg void OnBnClickedButtonCom();
 	afx_msg void OnBnClickedButtonCom1Send();
-	//afx_msg void OnBnClickedButtonCom2Send();
 	afx_msg void OnBnClickedButtonZhongliang(); // 取重量
 
-	void GetData(char *url, char *para);
-	void PostData(char *url, char *para);
 	CEdit m_ip;
 	CEdit m_port;
 	CEdit m_com1;
-	CEdit m_com2;
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	CEdit m_user;
 	CEdit m_pwd;
@@ -134,13 +120,6 @@ public:
 	afx_msg void OnBnClickedButtonComConn();
 	afx_msg void OnBnClickedButtonLogin();
 	afx_msg void OnBnClickedButtonLogout();
-	void OnKeepalive(); // 保持连接
-	void OnLogin(); // 用户登录
-	void OnGet1(); // 第一次获得ID
-	void OnGet2(); // 第二次获得ID
-	void OnPost1(); // 第一次提交表单
-	void OnPost2(); // 第二次提交表单
-	void OnGuiGe(); // 获得指定货物的规格列表
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnBnClickedButtonTijiao();
 	CButton m_dayin;
@@ -170,4 +149,12 @@ public:
 	afx_msg void OnBnClickedCheck2();
 	afx_msg void OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedButtonQuxiao();
+
+	// CURL 
+	CURL *curl;
+	static size_t login_data(void *ptr, size_t size, size_t nmemb, void *userp); // 登陆返回数据
+	static size_t getid_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得单号返回数据
+	static size_t post_data(void *ptr, size_t size, size_t nmemb, void *userp); // 提交数据返回数据
+	static size_t guige_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得规格返回数据
+
 };

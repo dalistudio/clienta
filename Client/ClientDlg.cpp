@@ -169,6 +169,12 @@ BOOL CClientDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 
+	//
+	// CURL
+	// 
+	CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
+	curl = curl_easy_init();
+
 	memset(m_Weight,0,16); // 清空重量的全局变量
 	memset(m_dibang_data,0,32); // 清空地磅数据
 	m_dibang_data_pos = 0;
@@ -202,9 +208,6 @@ BOOL CClientDlg::OnInitDialog()
 	conf.port = 80;
 	conf.com1_id=1;
 	strcpy(conf.com1_para,"baud=9600 parity=N data=8 stop=1");
-	strcpy(conf.cookie,"");
-	strcpy(conf.sid,"");
-	strcpy(conf.aid,"");
 
 	// 打开配置文件 JSON 格式
 	FILE *f=fopen("config","rb"); // 配置文件 config
@@ -364,20 +367,7 @@ BOOL CClientDlg::OnInitDialog()
 	m_chexing.AddString(_T("大车"));
 	m_chexing.AddString(_T("小车"));
 	m_chexing.SetCurSel(0); // 选择第一项“大车”
-/*
-	m_huowu.AddString(_T("青石"));
-	m_huowu.AddString(_T("半青石"));
-	m_huowu.AddString(_T("石粉"));
-	m_huowu.AddString(_T("混合"));
-	m_huowu.AddString(_T("峰石"));
-	m_huowu.AddString(_T("二片石"));
-	m_huowu.SetCurSel(0);
 
-	m_guige.AddString(_T("0.5"));
-	m_guige.AddString(_T("1.2"));
-	m_guige.AddString(_T("1.3"));
-	m_guige.SetCurSel(0);
-*/
 	///////////////////////////////
 	// 车辆信息列表设置
 	LONG lStyle; 
@@ -427,8 +417,6 @@ void CClientDlg::OnPaint()
 	if (IsIconic())
 	{
 		CPaintDC dc(this); // 用于绘制的设备上下文
-
-		
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
@@ -668,156 +656,6 @@ void CClientDlg::OnBnClickedButtonCom1Send()
 	frame->Create(_T("打印预览"), this,TRUE );
 }
 
-// 连接网络
-void CClientDlg::OnConnected()
-{
-	USES_CONVERSION;  // dali
-	m_ip.SetWindowText(A2CW(conf.ip));
-	char tmp[16]={0};
-	sprintf(tmp,"%d",conf.port);
-	m_port.SetWindowText(A2CW(tmp));
-	printf("连接服务器成功\n");
-	m_btn_net.SetWindowText(_T("连接成功"));
-	m_btn_net.EnableWindow(FALSE);
-	//MessageBox("连接成功");
-}
-
-// 接收网络数据
-void CClientDlg::OnRvc()
-{
-	memset(&m_net_rvc_data,0,10240);
-	m_net_rvc_len = m_Conn.Receive(m_net_rvc_data,10239);
-	if (SOCKET_ERROR != m_net_rvc_len)
-	{
-		printf("%s\n",m_net_rvc_data);
-		switch(m_post_id)
-		{
-		case 1: // 保持连接
-			OnKeepalive();
-			break;
-		case 2: // 用户登录请求
-			OnLogin();
-			break;
-		case 3: // 获得新的账单号
-			OnGet1();
-			break;
-		case 4: // 提交第一次过磅单
-			OnPost1();
-			break;
-		case 5: // 获得第一次过磅的数据，即第二次过磅
-			OnGet2();
-			break;
-		case 6: // 第二次过磅单
-			OnPost2();
-			break;
-		case 8: // 获得指定货物规格列表
-			OnGuiGe();
-			break;
-		}
-	}
-}
-
-// 关闭网络
-void CClientDlg::OnClose()
-{
-	m_Conn.Close();
-	m_btn_net.SetWindowText(_T("重新连接(&R)..."));
-	m_btn_net.EnableWindow(TRUE);
-//	MessageBox(L"连接断开~~");
-}
-
-void CClientDlg::GetData(char *url, char *para)
-{
-	char Data[1024] = {0};
-	strcat(Data,"GET ");
-	strcat(Data,url);
-	strcat(Data,"?");
-	strcat(Data,para);
-	strcat(Data," HTTP/1.1\r\n");
-	strcat(Data,"Host: ");
-	strcat(Data,conf.ip);
-	strcat(Data,"\r\n");
-	strcat(Data,"Connection: Keep-Alive\r\n");
-	strcat(Data,"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n");
-	strcat(Data,"User-Agent: Mozilla/5.0 (Windows Client; Dali Wang<wangdali@qq.com>)\r\n");
-	strcat(Data,"Accept-Language: zh-CN,zh;q=0.8\r\n");
-	if(strcmp(conf.cookie,"")!=0)
-	{
-		strcat(Data,"Cookie: ");
-		strcat(Data,conf.cookie);
-		strcat(Data,"\r\n");
-	}
-	strcat(Data,"\r\n");
-
-	if(m_Conn.Send(Data,strlen(Data))==SOCKET_ERROR) // 如果发送返回-1，表示错误
-	{
-		DWORD err = GetLastError();
-		switch(err)
-		{
-		case WSAEWOULDBLOCK: 
-			// 不处理
-			break;
-		case WSAENOTCONN: // 不能连接
-			OnClose(); // 关闭连接
-			printf("无法连接服务器。\n");
-//			OnBnClickedButtonNetConn(); // 重新连接
-			break;
-		case WSAENOTSOCK: // 未创建Socket
-//			OnClose(); // 关闭连接
-			printf("未创建Socket。\n");
-//			OnBnClickedButtonNetConn(); // 重新连接
-			break;
-//		default:
-			
-		};
-	}
-	else
-	{
-		printf("%s\n",Data);
-	}
-}
-
-void CClientDlg::PostData(char *url, char *para)
-{
-	char Data[1024] = {0};
-	strcat(Data,"POST ");
-	strcat(Data,url);
-	strcat(Data," HTTP/1.1\r\n");
-	strcat(Data,"Host: ");
-	strcat(Data,conf.ip);
-	strcat(Data,"\r\n");
-	strcat(Data,"Connection: Keep-Alive\r\n");
-	strcat(Data,"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n");
-	strcat(Data,"User-Agent: Mozilla/5.0 (Windows Client; Dali Wang<wangdali@qq.com>)\r\n");
-	strcat(Data,"Accept-Language: zh-CN,zh;q=0.8\r\n");
-	if(strcmp(conf.cookie,"")!=0)
-	{
-		strcat(Data,"Cookie: ");
-		strcat(Data,conf.cookie);
-		strcat(Data,"\r\n");
-	}
-	strcat(Data,"Content-Type: application/x-www-form-urlencoded\r\n");
-	strcat(Data,"Content-Length: ");
-	char tmp[16] = {0};
-	sprintf(tmp,"%d",strlen(para));
-	strcat(Data,tmp);
-	strcat(Data,"\r\n");
-	strcat(Data,"\r\n");
-	strcat(Data,para);
-
-	if(m_Conn.Send(Data,strlen(Data))==SOCKET_ERROR) // 如果发送返回-1，表示错误
-	{
-		if(GetLastError()==WSAEWOULDBLOCK)
-		{
-		}
-		else
-		{
-			m_Conn.Close(); // 关闭连接
-		}
-	}
-	printf("%s\n",Data);
-}
-
 BOOL CClientDlg::PreTranslateMessage(MSG* pMsg)
 {
 	// TODO: 在此添加专用代码和/或调用基类
@@ -873,6 +711,7 @@ void CClientDlg::OnBnClickedButtonNetConn()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	// 初始化Socket
+/*
 	m_Conn.SetDlg(this);
 	if (m_Conn.Create())
 	{
@@ -884,6 +723,7 @@ void CClientDlg::OnBnClickedButtonNetConn()
 	}
 	USES_CONVERSION;  // dali
 	m_Conn.Connect(A2CW(conf.ip),conf.port);
+*/
 }
 
 // 重新打开串口
@@ -910,39 +750,57 @@ void CClientDlg::OnBnClickedButtonComConn()
 void CClientDlg::OnBnClickedButtonLogin()
 {
 	// TODO: 在此添加控件通知处理程序代码
-
-	USES_CONVERSION; // dali
-	m_post_id = 2; // 提交ID为2
-	char Data[256] ={0};
-	strcat(Data,"User=");
-	CString strUser =_T("");
+	USES_CONVERSION;
+	CString strUser, strPasswd;
 	m_user.GetWindowText(strUser); // 获得用户名
-	strcat(Data,W2A(strUser)); // 设置用户名
-	strcat(Data,"&Passwd=");
-	CString strPwd = _T("");
-	m_pwd.GetWindowText(strPwd); // 获得密码
-	strcat(Data,W2A(strPwd)); // 设置密码
-	strcat(Data,"&Level=1"); // 这里Level=1
-	GetData("/login.php",(char*)&Data); // 发送 GET 请求
+	m_pwd.GetWindowText(strPasswd); // 获得密码
+
+	char url[256]={0};
+	strcat(url,"http://");
+	strcat(url,conf.ip);
+	strcat(url,"/");
+	strcat(url,"login.php");
+	strcat(url,"?");
+	strcat(url,"User=");
+	strcat(url,W2A(strUser));
+	strcat(url,"&");
+	strcat(url,"Passwd=");
+	strcat(url,W2A(strPasswd));
+	strcat(url,"&");
+	strcat(url,"Level=1");
+
+	CURLcode res;
+	
+	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, login_data);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
+	curl_easy_setopt(curl,CURLOPT_COOKIELIST,"");
+	res = curl_easy_perform(curl);
+
+	struct curl_slist *cookies = NULL;
+	curl_easy_getinfo(curl,CURLINFO_COOKIELIST,&cookies);
 }
 
 // 登出
 void CClientDlg::OnBnClickedButtonLogout()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	m_user.SetWindowText(_T(""));
-	m_user.EnableWindow(TRUE);
-	m_pwd.SetWindowText(_T(""));
-	m_pwd.EnableWindow(TRUE);
-	m_btn_login.EnableWindow(TRUE);
-	memset(&(conf.cookie),0,256);
-	memset(&(conf.sid),0,256);
-	memset(&(conf.aid),0,256);
+
+	curl_easy_cleanup(curl); // 清除CRUL
+
+	m_user.SetWindowText(_T("")); // 设置用户框为空
+	m_user.EnableWindow(TRUE); // 设置用户框为可读写
+
+	m_pwd.SetWindowText(_T("")); // 设置密码框为空
+	m_pwd.EnableWindow(TRUE); // 设置密码框为可读写
+
+	m_btn_login.EnableWindow(TRUE); // 设置登陆按钮为可操作
 }
 
 // 保持连接
-void CClientDlg::OnKeepalive()
-{
+//void CClientDlg::OnKeepalive()
+//{
+/*
 	if(strcmp(conf.aid,"")==0)
 	{
 		return;
@@ -1003,188 +861,13 @@ void CClientDlg::OnKeepalive()
 			cJSON_Delete(jsonroot);
 		}
 	}
-}
-
-// 用户登录
-void CClientDlg::OnLogin()
-{
-	// 如果返回 200 和 SetCookie ，则禁用登录相关控件
-	TOKEN * t = (TOKEN *)malloc(sizeof(TOKEN));
-	TOKEN * l = (TOKEN *)malloc(sizeof(TOKEN));
-	TOKEN * c = (TOKEN *)malloc(sizeof(TOKEN));
-	TOKEN * a = (TOKEN *)malloc(sizeof(TOKEN));
-	char *tStr ,*lStr, *cStr, *aStr;
-	tStr = strtoken(t,(char*)&m_net_rvc_data,"\r\n");
-	lStr = strtoken(l,(char*)tStr," "); // HTTP/1.1
-	lStr = strtoken(l,NULL," "); // 200 
-	if(strcmp(lStr,"200")==0)
-	{
-		while(t->data!=NULL)
-		{
-			tStr = strtoken(t,NULL, "\r\n");
-			cStr = strtoken(c,tStr,":");
-			if(strcmp(cStr,"Set-Cookie")==0)
-			{
-				// 这里应该判断是否存在“AID”身份标识，
-				// 存在则登录成功，否则登录失败。
-				cStr = strtoken(c,NULL,":");
-				aStr = strtoken(a,cStr,"=");
-				if(strcmp(aStr," PHPSESSID")==0) // 会话ID
-				{
-					strcpy(conf.sid,cStr); // 设置SID的值
-				}
-
-				if(strcmp(aStr," AID")==0) // 身份ID
-				{
-					strcpy(conf.aid,cStr); // 设置AID的值
-				}	
-			}
-			if(strcmp(tStr,"")==0) // 空行
-			{
-				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体长度
-				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体内容
-				break;
-			}
-		} // while
-
-		if(strcmp(conf.sid,"") > 0 && strcmp(conf.aid,"")>0)
-		{
-			strcpy(conf.cookie,conf.sid); // 设置Cookie的值
-			strcat(conf.cookie,";");
-			strcat(conf.cookie,conf.aid);
-			m_user.EnableWindow(FALSE); // 禁用用户输入框
-			m_pwd.EnableWindow(FALSE);  // 禁用密码输入框 
-			m_btn_login.EnableWindow(FALSE); // 禁用登录按钮
-			m_id.EnableWindow(TRUE); // 启用单号控件
-			m_id.SetFocus(); // 设置单号为焦点
-
-			// 这里处理会员名称
-			USES_CONVERSION;  // dali
-			cJSON *jsonroot = cJSON_Parse(tStr); //json根
-			if(jsonroot)
-			{
-				// 获取货物名称和规格
-				CList<CString ,CString> list; // 链表
-				cJSON *type = cJSON_GetObjectItem(jsonroot,"type");
-				cJSON *next = type->child; // type的子项
-				while(next->next != NULL) // type的下一项为空
-				{
-					char * strHuoWu = next->string; // 货物名称
-//					char * strGuiGe = next->valuestring; // 货物规格
-					next = next->next; // 移动到type的下一项
-					//printf("HuoWu:%s = GuiGe:%s\n",UTF8ToEncode(strHuoWu),UTF8ToEncode(strGuiGe));
-					if(list.IsEmpty()) // 如果链表为空
-					{
-						list.AddTail(A2CW(UTF8ToEncode(strHuoWu))); // 添加到链表尾
-						m_huowu.AddString(A2CW(UTF8ToEncode(strHuoWu)));
-					}
-					else // 否则循环是否相同
-					{
-						POSITION pos = list.GetHeadPosition(); // 获得链表的头位置
-						CString pstr1 = A2CW(UTF8ToEncode(strHuoWu));
-						CString pstr2;
-						int isa = 0;
-						while(pos != NULL)   
-						{   
-							pstr2 = list.GetNext(pos); // 获得内容
-							if(pstr1.Compare(pstr2)==0)
-							{
-								isa = 1;
-							}
-						}
-						if(isa==0)
-						{
-							list.AddTail(pstr1); // 添加到链表尾
-							m_huowu.AddString(pstr1);
-						}
-						
-					}
-				}
-				m_huowu.SetCurSel(0); // 货物名称选择第一个项
-				// 这里应该发送 HTTP 请求获得第一次项货物的规格列表
-				CString strHuoWu; 
-				m_huowu.GetWindowText(strHuoWu);
-				strHuoWu = L"huowu=" + strHuoWu;
-				m_post_id = 8;
-				GetData("/getguige.php",W2A(strHuoWu));
-				
-				// 获取成员名称
-				cJSON *member = cJSON_GetObjectItem(jsonroot,"member");
-				int size = cJSON_GetArraySize(member); // 获得数组的长度
-				for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
-				{
-					cJSON* node;
-					node = cJSON_GetArrayItem(member,i);
-					m_shouhuo.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加会员名称到单位控件下
-				}
-				m_shouhuo.SetCurSel(0);
-			}
-			cJSON_Delete(jsonroot);
-			
-		}
-		else
-		{
-			MessageBox(_T("用户名 或 密码 错误！"),_T("登录失败"));
-		}
-	}
-}
-
-// 请求一个新的单号
-void CClientDlg::OnGet1()
-{
-	GetWindow();
-//	m_jingzhong.SetReadOnly(TRUE);
-//	m_danjia.SetReadOnly(TRUE);
-
-	TOKEN * t = (TOKEN *)malloc(sizeof(TOKEN));
-	TOKEN * l = (TOKEN *)malloc(sizeof(TOKEN));
-
-	char *tStr ,*lStr, *cStr;
-	tStr = strtoken(t,(char*)&m_net_rvc_data,"\r\n"); // 响应行
-	lStr = strtoken(l,(char*)tStr," "); // HTTP/1.1
-	lStr = strtoken(l,NULL," "); // 200 
-	if(strcmp(lStr,"200")==0)
-	{
-		while(t->data!=NULL)
-		{
-			tStr = strtoken(t,NULL, "\r\n");
-			if(strcmp(tStr,"")==0) // 空行
-			{
-				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体长度
-				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体内容
-				break;
-			}
-		}
-		if(strcmp(tStr,"")==0) // 如果返回的数据为空
-		{
-			MessageBox(L"无可用的单号!!!",L"数据库");
-		}
-		else
-		{
-			USES_CONVERSION;  // dali
-			cJSON *jsonroot = cJSON_Parse(tStr); //json根
-			if(jsonroot)
-			{
-				m_id.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"id")->valuestring)); // 设置“单号”
-				m_post_id = 4; // 第一次提交
-			}
-			else
-			{
-				MessageBox(L"服务器返回单号错误！",L"服务器");
-			}
-			cJSON_Delete(jsonroot);
-
-			m_id.EnableWindow(FALSE); // 禁止“单号”对话框
-			m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
-			m_chehao.SetFocus(); // 设置车号为焦点
-		}
-		
-	}
-}
+*/
+//}
 
 // 根据单号，请求单据信息
-void CClientDlg::OnGet2()
-{
+//void CClientDlg::OnGet2()
+//{
+/*
 	SetWindow(); // 禁用所有控件
 //	m_jingzhong.EnableWindow(TRUE); // 启用“净重”控件
 //	m_danjia.EnableWindow(TRUE); // 启用“单价”控件
@@ -1269,85 +952,8 @@ void CClientDlg::OnGet2()
 
 //	free(t);
 //	free(l);
-}
-
-// 第一次提交单据
-void CClientDlg::OnPost1()
-{
-//	MessageBox(L"第一次过磅");
-	// 判断第一次提交是否正确
-	// 如果正确就跳转到“打印”按钮
-	MessageBox(L"提交成功");
-	m_dayin.EnableWindow(TRUE); // 启用“打印”按钮
-	m_tijiao.EnableWindow(FALSE); // 禁用“提交”按钮
-	m_dayin.SetFocus();
-}
-
-// 第二次提交单据
-void CClientDlg::OnPost2()
-{
-//	MessageBox(L"第二次过磅");
-	// 判断第二次提交是否正确
-	// 如果正确就跳转到“打印”按钮
-	MessageBox(L"提交成功");
-	m_dayin.EnableWindow(TRUE); // 启用“打印”按钮
-	m_tijiao.EnableWindow(FALSE); // 禁用“提交”按钮
-	m_dayin.SetFocus();
-}
-
-// 获得指定货物的规格列表
-void CClientDlg::OnGuiGe()
-{
-		// 分析返回数据，并显示出来。
-	TOKEN * t = (TOKEN *)malloc(sizeof(TOKEN));
-	TOKEN * l = (TOKEN *)malloc(sizeof(TOKEN));
-
-	char *tStr;
-	char *lStr;
-	tStr = strtoken(t,(char*)&m_net_rvc_data,"\r\n"); // 响应行
-	lStr = strtoken(l,(char*)tStr," "); // HTTP/1.1
-	lStr = strtoken(l,NULL," "); // 200 
-	if(strcmp(lStr,"200")==0)
-	{
-		while(t->data!=NULL)
-		{
-			tStr = strtoken(t,NULL, "\r\n");
-			if(strcmp(tStr,"")==0) // 空行
-			{
-				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体长度
-				tStr = strtoken(t,NULL, "\r\n"); // 得到相应体内容
-				break;
-			}
-		}
-		if(strcmp(tStr,"")==0) // 如果返回的数据为空
-		{
-
-		}
-		else
-		{
-			USES_CONVERSION;  // dali
-			cJSON *jsonroot = cJSON_Parse(tStr); //json根
-			if(jsonroot)
-			{
-				int size = cJSON_GetArraySize(jsonroot); // 获得数组的长度
-				for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
-				{
-					cJSON* node;
-					node = cJSON_GetArrayItem(jsonroot,i);
-					m_guige.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加规格到控件下
-				}
-				m_guige.SetCurSel(0);
-				
-			}
-			cJSON_Delete(jsonroot);
-			
-		}
-	}
-	if(strcmp(lStr,"404")==0)
-		MessageBox(_T("文件没有找到！\n服务程序出问题了！"),_T("网络连接"));
-	if(strcmp(lStr,"500")==0)
-		MessageBox(_T("服务器错误！！！"),_T("网络连接"));
-}
+*/
+//}
 
 // 定时器
 void CClientDlg::OnTimer(UINT_PTR nIDEvent)
@@ -1356,8 +962,8 @@ void CClientDlg::OnTimer(UINT_PTR nIDEvent)
 	switch(nIDEvent)
 	{
 	case 1:
-		m_post_id = 1; // 提交ID为1
-		GetData("/keepalive.php","");
+//		m_post_id = 1; // 提交ID为1
+//		GetData("/keepalive.php","");
 		return;
 	}
 	CDialogEx::OnTimer(nIDEvent);
@@ -1380,6 +986,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	CString strPiZhong,strMaoZhong,strJingZhong; // 皮重，毛重，净重
 	CString strDanJia,strJinE; // 单价，金额
 	CString strYouHui; // 优惠信息
+	CString strUser; // 司磅员
 
 	m_id.GetWindowText(strDanHao); // 单号
 	m_chehao.GetWindowText(strCheHao); // 车号
@@ -1393,6 +1000,9 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	m_jingzhong.GetWindowText(strJingZhong); // 净重
 	m_danjia.GetWindowText(strDanJia); // 单价
 	m_jine.GetWindowText(strJinE); // 金额
+	m_user.GetWindowText(strUser);
+	
+
 	strYouHui = L"";
 	if(m_shoudong.GetCheck())
 	{
@@ -1411,10 +1021,6 @@ void CClientDlg::OnBnClickedButtonTijiao()
 			MessageBox(L"\"皮重\"不能为空，检查地磅线路等是否正常！",L"地磅");
 			return;
 		}
-//		else
-//		{
-//			m_post_id = 4; // 第一次提交
-//		}
 	}
 	else // 第二次提交
 	{
@@ -1423,28 +1029,32 @@ void CClientDlg::OnBnClickedButtonTijiao()
 			MessageBox(L"\"净重\"不能为空，检查地磅线路等是否正常！",L"地磅");
 			return;
 		}
-//		else
-//		{
-//			m_post_id = 6;
-//		}
-		
 	}
 
-	char str[1024]={0};
-	sprintf(str,"DanHao=%s&CheHao=%s&CheXing=%s&",W2A(strDanHao),W2A(strCheHao),W2A(strCheXing));
-	sprintf(str,"%sDanWei=%s&DianHua=%s&",str,W2A(strDanWei),W2A(strDianHua));
-	sprintf(str,"%sHuoWu=%s&GuiGe=%s&",str,W2A(strHuoWu),W2A(strGuiGe));
-	sprintf(str,"%sPiZhong=%s&MaoZhong=%s&JiangZhong=%s&",str,W2A(strPiZhong),W2A(strMaoZhong),W2A(strJingZhong));
-	if(m_type==1) m_post_id = 4;
-	if(m_type==2) m_post_id = 6;
-	sprintf(str,"%sDanJia=%s&JinE=%s&ZhuangTai=%d&",str,W2A(strDanJia),W2A(strJinE),m_post_id); // 单价 金额 状态
-	sprintf(str,"%sYouHui=%s&",str,W2A(strYouHui)); // 优惠信息
+	char data[1024]={0};
+	sprintf(data,"DanHao=%s&CheHao=%s&CheXing=%s&",W2A(strDanHao),W2A(strCheHao),W2A(strCheXing));
+	sprintf(data,"%sDanWei=%s&DianHua=%s&",data,W2A(strDanWei),W2A(strDianHua));
+	sprintf(data,"%sHuoWu=%s&GuiGe=%s&",data,W2A(strHuoWu),W2A(strGuiGe));
+	sprintf(data,"%sPiZhong=%s&MaoZhong=%s&JiangZhong=%s&",data,W2A(strPiZhong),W2A(strMaoZhong),W2A(strJingZhong));
+//	if(m_type==1) m_post_id = 4;
+//	if(m_type==2) m_post_id = 6;
+	sprintf(data,"%sDanJia=%s&JinE=%s&ZhuangTai=%d&",data,W2A(strDanJia),W2A(strJinE),m_post_id); // 单价 金额 状态
+	sprintf(data,"%sYouHui=%s&",data,W2A(strYouHui)); // 优惠信息
+	sprintf(data,"%sSiBangYuan=%s",data, W2A(strUser)); // 司磅员
 
-	CString strUser;
-	m_user.GetWindowText(strUser);
-	sprintf(str,"%sSiBangYuan=%s",str, W2A(strUser)); // 司磅员
-	PostData("/post.php",str);
+	char url[256]={0};
+	strcat(url,"http://");
+	strcat(url,conf.ip);
+	strcat(url,"/");
+	strcat(url,"post.php");
 
+	CURLcode res;
+	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl, CURLOPT_POST, 1L);  
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, post_data);
+	curl_easy_setopt( curl, CURLOPT_WRITEDATA, this ); 
+	res = curl_easy_perform(curl);
 }
 
 // 打印按钮
@@ -1546,44 +1156,41 @@ void CClientDlg::GetWindow()
 void CClientDlg::OnBnClickedButtonGet()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	SYSTEMTIME st;
-	GetLocalTime(&st);
-	char str[32]={0};
-	sprintf(str,"date=%4d%02d%02d&id=",st.wYear,st.wMonth,st.wDay); // 当前日期
+	USES_CONVERSION;
+	CString strDanHao;
+	m_id.GetWindowText(strDanHao); // 获得单号
 
-	CString strId;
-	m_id.GetWindowText(strId);
-
-	if(strId.IsEmpty()) // 判断“单号”是否为空
+	if(strDanHao.IsEmpty())
 	{
-		// 获取单号
-		m_post_id = 3; // 提交ID为3
-		m_type = 1;
-		strcat(str,"0");
-		GetData("/getid.php",str); // 获得一个新的单号
-
-		m_tijiao.SetFocus(); // 设置单号为焦点
+		strDanHao = L"0";
+		m_post_id = 3; // 获得新单号
 	}
 	else
 	{
-		int i = _ttoi(strId); 
-		if(i==0)
+		int i = _ttoi(strDanHao); // 将单号转为整数
+		if(i==0) // 如果单号全为0
 		{
 			MessageBox(L"单号不能全为：0");
 			return;
 		}
-
-		// 根据单号获取单据信息
-		m_post_id = 5; // 提交ID为5
-		m_type = 2;
-		// 这里需要生成当前的日期和获得单号
-		CString id=L"";
-		m_id.GetWindowText(id);
-		USES_CONVERSION;
-		strcat(str,W2A(id));
-		GetData("/getid.php",str); // 提交放行请求
-		m_tijiao.SetFocus(); // 设置单号为焦点
+		m_post_id = 5; // 根据单号查单据
 	}
+
+	char url[256]={0};
+	strcat(url,"http://");
+	strcat(url,conf.ip);
+	strcat(url,"/");
+	strcat(url,"getid.php");
+	strcat(url,"?");
+	strcat(url,"id=");
+	strcat(url,W2A(strDanHao));
+
+	CURLcode res;
+	
+	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getid_data);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
+	res = curl_easy_perform(curl);
 }
 
 // 编辑按钮
@@ -1820,31 +1427,6 @@ void CClientDlg::OnCbnSelchangeComboHuowu()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	// 当修改货物时，发送HTTP请求，获得指定货物的所有规格
-/*
-	CString HuoWu;
-	m_huowu.GetWindowText(HuoWu); // 获得货物的名称
-	if(HuoWu.Compare(L"青石")==0)
-	{
-		m_guige.ResetContent(); // 清空下拉列表
-		m_guige.AddString(_T("0.5"));
-		m_guige.AddString(_T("1.2"));
-		m_guige.AddString(_T("1.3"));
-		m_guige.SetCurSel(0);
-		return;
-	}
-	if(HuoWu.Compare(L"半青石")==0)
-	{
-		m_guige.ResetContent();
-		m_guige.AddString(_T("0.5"));
-		m_guige.AddString(_T("1.3"));
-		m_guige.AddString(_T("2.4"));
-		m_guige.SetCurSel(0);
-		return;
-	}
-	m_guige.ResetContent();
-	m_guige.AddString(_T("0"));
-	m_guige.SetCurSel(0);
-*/
 	m_guige.ResetContent();
 	
 	USES_CONVERSION;
@@ -1852,9 +1434,21 @@ void CClientDlg::OnCbnSelchangeComboHuowu()
 
 	int pos = m_huowu.GetCurSel(); // 获得当前选项的序号
 	m_huowu.GetLBText(pos,strHuoWu); // 获得指定序号的文字
-	strHuoWu = L"huowu=" + strHuoWu;
-	m_post_id = 8;
-	GetData("/getguige.php",W2A(strHuoWu));
+
+	char url[256]={0};
+	strcat(url,"http://");
+	strcat(url,conf.ip);
+	strcat(url,"/");
+	strcat(url,"getguige.php");
+	strcat(url,"?");
+	strcat(url,"huowu=");
+	strcat(url,W2A(strHuoWu));
+
+	CURLcode res;
+	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, guige_data);
+	curl_easy_setopt( curl, CURLOPT_WRITEDATA, this ); 
+	res = curl_easy_perform(curl);
 }
 
 // 修改车型
@@ -1904,12 +1498,6 @@ void CClientDlg::OnBnClickedCheck1()
 	// 1、判断“优惠”复选框是否选择
 	// 2、允许修改“金额”编辑框
 	// 3、备注为“手动”
-//	if(m_shoudong.GetCheck() && m_youhui.GetCheck())
-//	{
-//		m_shoudong.SetCheck(FALSE);
-//		MessageBox(L"不能同时选择\"手动\"和\"优惠\"");
-//		return;
-//	}
 	if(m_shoudong.GetCheck()) // 选中状态
 	{
 		m_pizhong.EnableWindow(TRUE); // 启用“皮重”控件
@@ -1929,12 +1517,6 @@ void CClientDlg::OnBnClickedCheck1()
 void CClientDlg::OnBnClickedCheck2()
 {
 	// TODO: 在此添加控件通知处理程序代码
-//	if(m_shoudong.GetCheck() && m_youhui.GetCheck())
-//	{
-//		m_youhui.SetCheck(FALSE);
-//		MessageBox(L"不能同时选择\"手动\"和\"优惠\"");
-//		return;
-//	}
 	if( m_youhui.GetCheck()) // 选中状态
 	{
 		m_jine.EnableWindow(TRUE); // 启用“金额”控件
@@ -1990,4 +1572,159 @@ void CClientDlg::OnBnClickedButtonQuxiao()
 	{
 		m_youhui.SetCheck(FALSE);
 	}
+}
+
+// 登陆返回数据
+size_t CClientDlg::login_data(void *ptr, size_t size, size_t nmemb, void *userp)
+{
+	
+	CClientDlg *client =(CClientDlg*)userp;
+
+	// 这里处理会员名称
+	USES_CONVERSION;  // dali
+	cJSON *jsonroot = cJSON_Parse((const char*)ptr); //json根
+	if(jsonroot)
+	{
+		// 获取货物名称和规格
+		CList<CString ,CString> list; // 链表
+		cJSON *type = cJSON_GetObjectItem(jsonroot,"type");
+		cJSON *next = type->child; // type的子项
+		while(next->next != NULL) // type的下一项为空
+		{
+			char * strHuoWu = next->string; // 货物名称
+//			char * strGuiGe = next->valuestring; // 货物规格
+			next = next->next; // 移动到type的下一项
+			//printf("HuoWu:%s = GuiGe:%s\n",UTF8ToEncode(strHuoWu),UTF8ToEncode(strGuiGe));
+			if(list.IsEmpty()) // 如果链表为空
+			{
+				list.AddTail(A2CW(UTF8ToEncode(strHuoWu))); // 添加到链表尾
+				client->m_huowu.AddString(A2CW(UTF8ToEncode(strHuoWu)));
+			}
+			else // 否则循环是否相同
+			{
+				POSITION pos = list.GetHeadPosition(); // 获得链表的头位置
+				CString pstr1 = A2CW(UTF8ToEncode(strHuoWu));
+				CString pstr2;
+				int isa = 0;
+				while(pos != NULL)   
+				{   
+					pstr2 = list.GetNext(pos); // 获得内容
+					if(pstr1.Compare(pstr2)==0)
+					{
+						isa = 1;
+					}
+				}
+				if(isa==0)
+				{
+					list.AddTail(pstr1); // 添加到链表尾
+					client->m_huowu.AddString(pstr1);
+				}
+						
+			}
+		}
+		client->m_huowu.SetCurSel(0); // 货物名称选择第一个项
+		// 这里应该发送 HTTP 请求获得第一次项货物的规格列表
+//		CString strHuoWu; 
+//		client->m_huowu.GetWindowText(strHuoWu);
+//		strHuoWu = L"huowu=" + strHuoWu;
+//		client->m_post_id = 8;
+//		client->GetData("/getguige.php",W2A(strHuoWu));
+				
+		// 获取成员名称
+		cJSON *member = cJSON_GetObjectItem(jsonroot,"member");
+		int size = cJSON_GetArraySize(member); // 获得数组的长度
+		for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
+		{
+			cJSON* node;
+			node = cJSON_GetArrayItem(member,i);
+			client->m_shouhuo.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加会员名称到单位控件下
+		}
+		client->m_shouhuo.SetCurSel(0);
+	}
+	cJSON_Delete(jsonroot);
+
+	client->m_user.EnableWindow(FALSE); // 禁用用户输入框
+	client->m_pwd.EnableWindow(FALSE);  // 禁用密码输入框 
+	client->m_btn_login.EnableWindow(FALSE); // 禁用登录按钮
+	client->m_id.EnableWindow(TRUE); // 启用单号控件
+	client->m_id.SetFocus(); // 设置单号为焦点
+	
+	return size*nmemb;
+}
+
+// 单号返回数据
+size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
+{
+	CClientDlg *client =(CClientDlg*)userp;
+
+	USES_CONVERSION; 
+	cJSON *jsonroot = cJSON_Parse((const char*)ptr); //json根
+	if(jsonroot)
+	{
+		if(client->m_post_id ==3) // 获得新的单号
+		{
+			client->m_post_id = 4; // 第一次提交
+			client->m_id.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"id")->valuestring)); // 设置“单号”
+
+			client->GetWindow(); // 设置控件为可读写
+			client->m_id.EnableWindow(FALSE); // 禁止“单号”对话框
+			client->m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
+			client->m_chehao.SetFocus(); // 设置车号为焦点
+		}
+		else if(client->m_post_id == 5) // 根据单号查询单据
+		{
+			client->m_post_id = 6; // 第二次提交
+
+			client->m_chehao.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"ch")->valuestring))); // 车号
+			client->m_dianhua.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"dh")->valuestring)); // 电话
+			client->m_shouhuo.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dw")->valuestring))); // 单位
+			client->m_huowu.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"hw")->valuestring))); // 货物
+			client->m_guige.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"gg")->valuestring)); // 规格
+			client->m_chexing.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"cx")->valuestring))); // 车型
+			client->m_pizhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"pz")->valuestring)); // 皮重
+			client->m_maozhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"mz")->valuestring)); // 毛重
+			client->m_jingzhong.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"jz")->valuestring)); // 净重
+			client->m_danjia.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dj")->valuestring))); // 单价
+			client->m_danjiadanwei = (A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"djdw")->valuestring))); // 单价单位
+			client->m_midu = atof(cJSON_GetObjectItem(jsonroot,"md")->valuestring); // 密度
+			client->m_jine.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"je")->valuestring))); // 金额
+			client->m_yue.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"ye")->valuestring))); // 余额
+
+			client->m_id.EnableWindow(FALSE); // 禁止“单号”对话框
+			client->m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
+			client->m_chehao.SetFocus(); // 设置车号为焦点
+		}
+	}
+	cJSON_Delete(jsonroot);
+	return size*nmemb;
+}
+
+// 提交数据返回数据
+size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
+{
+	CClientDlg *client =(CClientDlg*)userp;
+	return size*nmemb;
+}
+
+// 获得规格返回数据
+size_t CClientDlg::guige_data(void *ptr, size_t size, size_t nmemb, void *userp)
+{
+	CClientDlg *client =(CClientDlg*)userp;
+
+	USES_CONVERSION;  // dali
+	cJSON *jsonroot = cJSON_Parse((const char*)ptr); //json根
+	if(jsonroot)
+	{
+		int size = cJSON_GetArraySize(jsonroot); // 获得数组的长度
+		for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
+		{
+			cJSON* node;
+			node = cJSON_GetArrayItem(jsonroot,i);
+			client->m_guige.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加规格到控件下
+		}
+		client->m_guige.SetCurSel(0);
+				
+	}
+	cJSON_Delete(jsonroot);
+	return size*nmemb;
 }
