@@ -52,11 +52,9 @@ public:
 		CString m_User; // 司磅员
 	};
 	DAYIN DaYin;
-	
-	int len;
+
 	int m_post_id; // 提交的编号，用于区分不同提交。
-	char m_net_rvc_data[10240]; // 接收到的数据
-	int m_net_rvc_len; // 接收到的数据长度
+	int m_isLogin; // 是否登陆
 
 	unsigned char m_dibang_data[32]; // 地磅数据
 	int m_dibang_data_pos; // 地磅数据的位置
@@ -66,8 +64,7 @@ public:
 protected:
 	HICON m_hIcon;
 	_thread_com com1; // 创建串口1
-//	_thread_com com2; // 创建串口2
-	CString	m_e;
+//	CString	m_e;
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
@@ -113,10 +110,8 @@ public:
 	CButton m_shoudong;
 	CButton m_youhui;
 	CEdit m_zhongliang;
-	CButton m_btn_net;
 	CButton m_btn_login;
 	CListCtrl m_list; // 车辆信息列表
-	afx_msg void OnBnClickedButtonNetConn();
 	afx_msg void OnBnClickedButtonComConn();
 	afx_msg void OnBnClickedButtonLogin();
 	afx_msg void OnBnClickedButtonLogout();
@@ -156,5 +151,9 @@ public:
 	static size_t getid_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得单号返回数据
 	static size_t post_data(void *ptr, size_t size, size_t nmemb, void *userp); // 提交数据返回数据
 	static size_t guige_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得规格返回数据
-
+	static size_t cheliang_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得在场车辆返回数据
+	static size_t chehao_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得车号返回数据
+	void OnCheLiang(); // 车辆在场请求 
+	
+	
 };

@@ -105,8 +105,7 @@ void CPrinter::PrintHeader()
 	nPosY = 40;//m_page_v_margin-(3*m_line_height)/2;
 	nPosX = 300;//m_page_h_margin;
 	
-	m_dc->TextOut(nPosX,nPosY,m_title+L"过磅单"); // 标题
-	//m_dc->TextOutW(nPosX,nPosY,CString("海南港口文峰石场过磅单"));
+	m_dc->TextOut(nPosX,nPosY,m_title+L"过磅单"); // 标题+过磅单
 
 	m_dc->SelectObject(old_font);
 	fontHeader.DeleteObject();
@@ -177,8 +176,9 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(395,207,m_CheHao);
 
 		m_dc->TextOut(730,207,CString("皮重"));
-		if(m_PiZhong.IsEmpty())
+		if(m_PiZhong.IsEmpty() || m_PiZhong==L"0")
 		{
+			m_PiZhong = L"";
 			m_dc->TextOut(1065,207,m_PiZhong);
 		}
 		else
@@ -191,8 +191,9 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(395,207+40,m_CheXing);
 
 		m_dc->TextOut(730,207+40,CString("毛重"));
-		if(m_MaoZhong.IsEmpty())
+		if(m_MaoZhong.IsEmpty() || m_MaoZhong==L"0")
 		{
+			m_MaoZhong = L"";
 			m_dc->TextOut(1065,207+40,m_MaoZhong);
 		}
 		else
@@ -205,8 +206,9 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(395,207+80,m_DanWei);
 
 		m_dc->TextOut(730,207+80,CString("净重"));
-		if(m_JingZhong.IsEmpty())
+		if(m_JingZhong.IsEmpty() || m_JingZhong==L"0")
 		{
+			m_JingZhong = L"";
 			m_dc->TextOut(1065,207+80,m_JingZhong);
 		}
 		else
@@ -221,8 +223,9 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(730,207+120,CString("单价"));
 		if(m_CheXing.Compare(L"大车")==0)
 		{
-			if(m_DanJia.IsEmpty())
+			if(m_DanJia.IsEmpty() || m_DanJia==L"0")
 			{
+				m_DanJia =L"";
 				m_dc->TextOut(1065,207+120,m_DanJia);
 			}
 			else
@@ -232,8 +235,9 @@ void CPrinter::PrintBody()
 		}
 		else
 		{
-			if(m_DanJia.IsEmpty())
+			if(m_DanJia.IsEmpty() || m_DanJia==L"0")
 			{
+				m_DanJia = L"";
 				m_dc->TextOut(1065,207+120,m_DanJia);
 			}
 			else
@@ -248,8 +252,9 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(395,207+160,m_GuiGe);
 
 		m_dc->TextOut(730,207+160,CString("金额"));
-		if(m_JinE.IsEmpty())
+		if(m_JinE.IsEmpty() || m_JinE==L"0")
 		{
+			m_JinE =L"";
 			m_dc->TextOut(1065,207+160,m_JinE);
 		}
 		else
