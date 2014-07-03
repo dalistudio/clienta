@@ -1523,6 +1523,13 @@ size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 			client->m_post_id = 6; // 第二次提交
 			client->m_type = 2;
 
+			char *strid = cJSON_GetObjectItem(jsonroot,"id")->valuestring;
+			if(strcmp(strid,"0")==0)
+			{
+				client->MessageBox(L"无此单号！！！");
+				return size*nmemb; // 返回函数
+			}
+
 			client->m_chehao.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"ch")->valuestring))); // 车号
 			client->m_dianhua.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"dh")->valuestring)); // 电话
 			client->m_shouhuo.SetWindowText(A2CW(UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dw")->valuestring))); // 单位
