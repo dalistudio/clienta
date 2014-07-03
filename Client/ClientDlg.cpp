@@ -63,9 +63,6 @@ void CAboutDlg::OnLButtonDown(UINT nFlags, CPoint point)
 
 // CClientDlg 对话框
 
-
-
-
 CClientDlg::CClientDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CClientDlg::IDD, pParent)
 {
@@ -600,10 +597,6 @@ void CClientDlg::CalcJinE()
 	CString JingZhong;
 	m_jingzhong.GetWindowText(JingZhong);
 	int iJingZhong = _ttoi(JingZhong);
-
-	// 获得车型
-//	CString CheXing;
-//	m_chexing.GetWindowText(CheXing);
 
 	// 获得单价
 	CString DanJia;
@@ -1144,16 +1137,6 @@ LRESULT CClientDlg::OnMyPrint(WPARAM wParam,LPARAM lParam)
 		m_printer->EndPage();
 		m_printer->EndPrinting();
 	}
-//	else
-//	{
-		//画出第二页的内容
-//		m_printer->SetCurrentPage(1);
-//		m_printer->StartPage();
-//		m_printer->PrintHeader();
-//		m_printer->PrintBody();
-//		m_printer->EndPage();
-//		m_printer->EndPrinting();
-//	}
 	return 0;
 }
 
@@ -1322,17 +1305,20 @@ void CClientDlg::OnBnClickedButtonZhongliang()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	USES_CONVERSION;
+	CString strWeight;
+	int iWeight = atoi((char*)m_Weight);
+	strWeight.Format(_T("%d"),iWeight);
 	// 设置第一次过磅和第二次过磅的皮重和毛重
 	// 皮重
 	if(m_type == 1)
 	{
-		m_pizhong.SetWindowText(A2W((char*)m_Weight)); // 将值显示在皮重控件中。
+		m_pizhong.SetWindowText(strWeight); // 将值显示在皮重控件中。
 	}
 
 	// 毛重
 	if(m_type == 2)
 	{
-		m_maozhong.SetWindowText(A2W((char*)m_Weight)); // 将值显示在毛重控件中。
+		m_maozhong.SetWindowText(strWeight); // 将值显示在毛重控件中。
 		// 净重 = 毛重 - 皮重 
 		int iJingZhong,iMaoZhong,iPiZhong;
 		CString MaoZhong,PiZhong,JingZhong;
