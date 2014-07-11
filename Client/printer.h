@@ -40,6 +40,7 @@ public:
 	CString m_MaoZhong; // 毛重
 	CString m_JingZhong; // 净重
 	CString m_DanJia; // 单价
+	CString m_DanJiaDanWei; // 单价单位
 	CString m_JinE; // 金额
 	CString m_BeiZhu; // 备注
 	CString m_User; // 司磅员

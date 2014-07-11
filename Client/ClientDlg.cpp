@@ -98,6 +98,8 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_TIJIAO, m_tijiao);
 	DDX_Control(pDX, IDC_LIST1, m_list); // 车辆信息
 	DDX_Control(pDX, IDC_CHESHU, m_CheShu); // 在场车数
+	DDX_Control(pDX, IDC_DATE_START, m_Date_Start);
+	DDX_Control(pDX, IDC_DATE_END, m_Date_End);
 }
 
 BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
@@ -118,7 +120,7 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_EDIT, &CClientDlg::OnBnClickedButtonEdit)
 
 //	ON_WM_ACTIVATE()
-	ON_BN_CLICKED(IDC_BUTTON_FIND, &CClientDlg::OnBnClickedButtonFind)
+//	ON_BN_CLICKED(IDC_BUTTON_FIND, &CClientDlg::OnBnClickedButtonFind)
 	ON_BN_CLICKED(IDC_BUTTON_JIAOJIE, &CClientDlg::OnBnClickedButtonJiaojie)
 	ON_EN_CHANGE(IDC_EDIT_DANJIA, &CClientDlg::OnEnChangeEditDanjia)
 	ON_EN_CHANGE(IDC_EDIT_JINGZHONG, &CClientDlg::OnEnChangeEditJingzhong)
@@ -174,6 +176,10 @@ BOOL CClientDlg::OnInitDialog()
 	memset(strCheLiang,0,16*1024);
 	PosCheLiang=0;
 
+	// Date Time Ctrl
+	m_Date_Start.SetFormat(L"yyyy-MM-dd HH:mm:ss");
+	m_Date_End.SetFormat(L"yyyy-MM-dd HH:mm:ss");
+
 	memset(m_Weight,0,16); // 清空重量的全局变量
 	memset(m_dibang_data,0,32); // 清空地磅数据
 	m_dibang_data_pos = 0; // 地磅数据的位置
@@ -226,14 +232,15 @@ BOOL CClientDlg::OnInitDialog()
 		if(jsonroot)
 		{
 			strcpy_s(conf.title,cJSON_GetObjectItem(jsonroot,"title")->valuestring); // 获得标题
+			strcpy_s(conf.path,cJSON_GetObjectItem(jsonroot,"path")->valuestring); // 获得标题
 
 			cJSON *jsonServer=cJSON_GetObjectItem(jsonroot,"server");//取 Server
 			strcpy_s(conf.ip,cJSON_GetObjectItem(jsonServer,"ip")->valuestring); // 获得IP地址
 			conf.port = cJSON_GetObjectItem(jsonServer,"port")->valueint; // 获得端口
 
-			cJSON *jsonCOM1=cJSON_GetObjectItem(jsonroot,"com1");//取 COM1
-			conf.com1_id = cJSON_GetObjectItem(jsonCOM1,"port")->valueint; // 获得COM端口
-			strcpy_s(conf.com1_para,cJSON_GetObjectItem(jsonCOM1,"para")->valuestring); // 获得COM的属性
+			cJSON *jsonCOM=cJSON_GetObjectItem(jsonroot,"com");//取 COM
+			conf.com1_id = cJSON_GetObjectItem(jsonCOM,"port")->valueint; // 获得COM端口
+			strcpy_s(conf.com1_para,cJSON_GetObjectItem(jsonCOM,"para")->valuestring); // 获得COM的属性
 		}
 		else
 		{
@@ -615,7 +622,7 @@ void CClientDlg::CalcJinE()
 	if(strcmp(bill.DanJiaDanWei,"立方")==0)
 	{
 		// 按立方计算
-		float LiFang = iDun / atof(bill.MiDu); // 立方 = 吨/密度
+		float LiFang = iDun / (float)atof(bill.MiDu); // 立方 = 吨/密度
 		iJinE = iDanJia * LiFang; // 金额 = 单价 * 立方
 		GetDlgItem(IDC_STATIC_Dun)->SetWindowText(L"元/立方");
 	}
@@ -809,7 +816,10 @@ void CClientDlg::OnBnClickedButtonLogout()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	m_isLogin = 0; 
-	OnBnClickedButtonQuxiao(); // 清除所有控件的内容
+	OnBnClickedButtonQuxiao(); // 调用“取消”按钮
+	m_id.EnableWindow(FALSE); // 禁用“单号”输入框
+	m_list.DeleteAllItems(); // 清空LIST所有内容
+
 	m_user.SetWindowText(_T("")); // 设置用户框为空
 	m_user.EnableWindow(TRUE); // 设置用户框为可读写
 
@@ -933,6 +943,8 @@ void CClientDlg::OnBnClickedButtonTijiao()
 void CClientDlg::OnBnClickedButtonDayin()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	// 将打印需要的数据先备份到DaYin结构中
+	USES_CONVERSION;
 	DaYin.m_title = conf.title;
 	m_id.GetWindowText(DaYin.m_id);
 	m_chehao.GetWindowText(DaYin.m_CheHao);
@@ -945,7 +957,9 @@ void CClientDlg::OnBnClickedButtonDayin()
 	m_maozhong.GetWindowText(DaYin.m_MaoZhong);
 	m_jingzhong.GetWindowText(DaYin.m_JingZhong);
 	m_danjia.GetWindowText(DaYin.m_DanJia);
+	DaYin.m_DanJiaDanWei = A2W(bill.DanJiaDanWei);
 	m_jine.GetWindowText(DaYin.m_JinE);
+
 	// 备注
 	DaYin.m_BeiZhu = L"";
 	if(m_shoudong.GetCheck())
@@ -958,36 +972,10 @@ void CClientDlg::OnBnClickedButtonDayin()
 	}
 	m_user.GetWindowText(DaYin.m_User);
 
-
-	// 清空文本框的数据，并将焦点设置在单号处。
-	m_id.EnableWindow(TRUE); // 启用单号控件
-
-	m_id.SetWindowText(_T("")); // 单号
-	m_chehao.SetWindowText(_T("")); // 车号
-	m_dianhua.SetWindowText(_T("")); // 电话
-	m_shouhuo.SetWindowText(_T("")); // 收货单位
-	m_guige.SetWindowText(_T("")); // 货物规格
-	m_pizhong.SetWindowText(_T("")); // 皮重
-	m_maozhong.SetWindowText(_T("")); // 毛重
-	m_jingzhong.SetWindowText(_T("")); // 净重
-	m_danjia.SetWindowText(_T("")); // 单价
-	m_jine.SetWindowText(_T("")); // 金额
-	m_yue.SetWindowText(_T("")); // 余额
-	if(m_shoudong.GetCheck()) // 手动
-	{
-		m_shoudong.SetCheck(FALSE);
-	}
-	if(m_youhui.GetCheck()) // 优惠
-	{
-		m_youhui.SetCheck(FALSE);
-	}
-
-	OnBnClickedButtonQuxiao();
-	m_dayin.EnableWindow(FALSE); // 禁用“打印”按钮
-	m_id.SetFocus();
+	OnBnClickedButtonQuxiao(); // 调用“取消”按钮
 
 	// 执行打印
-	DoPrint();
+	DoPrint(); // 打印核心调用
 }
 
 // 获取单据信息
@@ -1034,6 +1022,10 @@ void CClientDlg::OnBnClickedButtonGet()
 	{
 		// 显示单据的数据
 		if(m_type==2)ShowBill();
+		if(strcmp(bill.ZhuangTai,"1")==0) // 如果已经第二次提交，则禁止再提交数据。
+		{
+			m_tijiao.EnableWindow(FALSE); // 禁用提交按钮
+		}
 	}
 }
 
@@ -1062,6 +1054,7 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_printer->SetTotalLineNumber(10);
 	m_printer->PreparePrinting();
 
+	USES_CONVERSION;
 	DaYin.m_title = conf.title;
 	m_id.GetWindowText(DaYin.m_id);
 	m_chehao.GetWindowText(DaYin.m_CheHao);
@@ -1074,6 +1067,7 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_maozhong.GetWindowText(DaYin.m_MaoZhong);
 	m_jingzhong.GetWindowText(DaYin.m_JingZhong);
 	m_danjia.GetWindowText(DaYin.m_DanJia);
+	DaYin.m_DanJiaDanWei = A2W(bill.DanJiaDanWei);
 	m_jine.GetWindowText(DaYin.m_JinE);
 	// 备注
 	DaYin.m_BeiZhu = L"";
@@ -1100,6 +1094,7 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_printer->m_MaoZhong = DaYin.m_MaoZhong; // 毛重
 	m_printer->m_JingZhong = DaYin.m_JingZhong; // 净重
 	m_printer->m_DanJia = DaYin.m_DanJia; // 单价
+	m_printer->m_DanJiaDanWei = DaYin.m_DanJiaDanWei; // 单价单位
 	m_printer->m_JinE = DaYin.m_JinE; // 金额
 	m_printer->m_BeiZhu = DaYin.m_BeiZhu; // 备注
 	m_printer->m_User = DaYin.m_User; // 司磅员
@@ -1141,7 +1136,7 @@ void CClientDlg::DoPrint()
 		PD_USEDEVMODECOPIES|PD_NOSELECTION);
 	//全部打印
 
-	if( IDOK == dlg.DoModal() )
+	if( IDOK == dlg.DoModal() ) // 显示打印对话框
 	{
 		CDC dc;
 		dc.Attach(dlg.m_pd.hDC);
@@ -1162,11 +1157,12 @@ void CClientDlg::DoPrint()
 		printer->m_MaoZhong = DaYin.m_MaoZhong; // 毛重
 		printer->m_JingZhong = DaYin.m_JingZhong; // 净重
 		printer->m_DanJia = DaYin.m_DanJia; // 单价
+		printer->m_DanJiaDanWei = DaYin.m_DanJiaDanWei; // 单价单位
 		printer->m_JinE = DaYin.m_JinE; // 金额
 		printer->m_BeiZhu = DaYin.m_BeiZhu; // 备注
 		printer->m_User = DaYin.m_User; // 司磅员
 
-		if(printer->StartPrinting())
+		if(printer->StartPrinting()) // 开始打印
 		{
 			while ( printer->NeedStartNewPage() )
 			{
@@ -1206,15 +1202,16 @@ LRESULT CClientDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 // 查询按钮
-void CClientDlg::OnBnClickedButtonFind()
-{
-	// TODO: 在此添加控件通知处理程序代码
-}
+//void CClientDlg::OnBnClickedButtonFind()
+//{
+//	// TODO: 在此添加控件通知处理程序代码
+//}
 
 // 交接班按钮
 void CClientDlg::OnBnClickedButtonJiaojie()
 {
 	// TODO: 在此添加控件通知处理程序代码
+/*
 //	SYSTEMTIME st;
 //	GetLocalTime(&st);
 	USES_CONVERSION;
@@ -1229,6 +1226,71 @@ void CClientDlg::OnBnClickedButtonJiaojie()
 //	sprintf_s(str,"%s^&end=",str); // 注意在win的命令行批处理中'&'需要转意为'^&'
 //	sprintf_s(str,"%s%4d%02d%02d%%20%02d:%02d:%02d",str,st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond); // 结束时间: 设置为当前时间
 	system(str);
+*/
+
+	USES_CONVERSION;
+
+	CString strStart,strEnd,strUser;
+	m_Date_Start.GetWindowText(strStart); // 获得开始时间
+	m_Date_End.GetWindowText(strEnd); // 获得结束时间
+	m_user.GetWindowText(strUser); // 获得用户名
+	if(strUser.Compare(L"")==0)
+	{
+		MessageBox(L"请先登录，再下载！！");
+		return;
+	}
+
+	// 获得程序运行的当前路径
+	CString strPath;
+	if(strcmp(conf.path,"")==0) // 如果配置文件中没有设置路径
+	{
+		LPWSTR path = new wchar_t[MAX_PATH];   
+		GetCurrentDirectory(MAX_PATH,path);
+		strPath.Format(L"%s",path);
+	}
+	else
+	{
+		
+		strPath = A2W(conf.path);
+	}
+	
+	// 转换时间为文件名的一部分
+	CTime Start_Time,End_Time;
+	m_Date_Start.GetTime(Start_Time);
+	m_Date_End.GetTime(End_Time);
+	CString strStartTime,strEndTime;
+	strStartTime.Format(_T("%04d%02d%02d%02d"),Start_Time.GetYear(),Start_Time.GetMonth(),Start_Time.GetDay(),Start_Time.GetHour());
+	strEndTime.Format(_T("%04d%02d%02d%02d"),End_Time.GetYear(),End_Time.GetMonth(),End_Time.GetDay(),End_Time.GetHour());
+
+	CString strFileName;
+	strFileName.Format(L"%s\\report_%s_%s-%s.xls",strPath,strUser,strStartTime,strEndTime);
+
+	FILE *fp;
+	fopen_s(&fp,W2A(strFileName),"wb"); // 保存文件及位置
+
+	char url[256]={0};
+	strcat_s(url,"http://");
+	strcat_s(url,conf.ip);
+	strcat_s(url,"/");
+	strcat_s(url,"Report_JiaoJie.php");
+
+	char data[1024]={0};
+	sprintf_s(data,"user=%s&",W2A(strUser)); // 用户
+	sprintf_s(data,"%sstart=%s&",data,W2A(strStart)); // 开始
+	sprintf_s(data,"%send=%s",data,W2A(strEnd)); // 结束
+
+	CURLcode res;
+	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl, CURLOPT_POST, 1L);  
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data); // POST 的数据
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, report_data); // 提交返回的数据
+	curl_easy_setopt( curl, CURLOPT_WRITEDATA, fp ); 
+	res = curl_easy_perform(curl);
+	if(res==0)
+	{
+		MessageBox(L"文件保存成功！！");
+	}
+	fclose(fp);
 }
 
 // 修改单价
@@ -1750,4 +1812,11 @@ void CClientDlg::OnBnClickedButton5()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	OnCheLiang();
+}
+
+// 获得交接班报表
+size_t CClientDlg::report_data(void *ptr, size_t size, size_t nmemb, void *userp)
+{
+	int written = fwrite(ptr, size, nmemb , (FILE *)userp); // 写入文件
+    return written; 
 }

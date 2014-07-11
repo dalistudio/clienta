@@ -32,6 +32,7 @@ public:
 		short port; // 端口
 		short com1_id; // 串口1的编号
 		char com1_para[64]; // 串口1的参数
+		char path[256]; // 报表保存路径
 	};
 
 	// 账单结构
@@ -73,6 +74,7 @@ public:
 		CString m_MaoZhong; // 毛重
 		CString m_JingZhong; // 净重
 		CString m_DanJia; // 单价
+		CString m_DanJiaDanWei; // 单价单位
 		CString m_JinE; // 金额
 		CString m_BeiZhu; // 备注
 		CString m_User; // 司磅员
@@ -154,7 +156,7 @@ public:
 	void DoPrint();
 	std::tr1::shared_ptr<CPrinter> m_printer;
 	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
-	afx_msg void OnBnClickedButtonFind();
+//	afx_msg void OnBnClickedButtonFind();
 	afx_msg void OnBnClickedButtonJiaojie();
 
 	void CalcJinE(); // 计算金额
@@ -175,10 +177,16 @@ public:
 	static size_t guige_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得规格返回数据
 	static size_t cheliang_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得在场车辆返回数据
 	static size_t chehao_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得车号返回数据
+	static size_t report_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得交接班报表
+
 	void OnCheLiang(); // 车辆在场请求 
 	void ShowBill(); // 显示单据的数据
 	char strCheLiang[16*1024]; // 在场车辆信息的数据
 	int  PosCheLiang; // 在场车辆信息数据的位置
+
+	// Date Time Ctrl
+	CDateTimeCtrl m_Date_Start;
+	CDateTimeCtrl m_Date_End;
 	
 	afx_msg void OnBnClickedButton5(); // 获得在场车辆信息
 };

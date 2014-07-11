@@ -202,7 +202,7 @@ void CPrinter::PrintBody()
 		}
 
 		// 第三行
-		m_dc->TextOut(80,207+80,CString("收货单位"));
+		m_dc->TextOut(80,207+80,CString("客户")); // 由单位名称改为客户
 		m_dc->TextOut(395,207+80,m_DanWei);
 
 		m_dc->TextOut(730,207+80,CString("净重"));
@@ -217,38 +217,46 @@ void CPrinter::PrintBody()
 		}
 
 		// 第四行
-		m_dc->TextOut(80,207+120,CString("货物名称"));
+		m_dc->TextOut(80,207+120,CString("货物"));
 		m_dc->TextOut(395,207+120,m_HuoWu);
 
 		m_dc->TextOut(730,207+120,CString("单价"));
-		if(m_CheXing.Compare(L"大车")==0)
+		if(m_DanJia.IsEmpty() || m_DanJia==L"0")
 		{
-			if(m_DanJia.IsEmpty() || m_DanJia==L"0")
-			{
-				m_DanJia =L"";
-				m_dc->TextOut(1065,207+120,m_DanJia);
-			}
-			else
-			{
-				m_dc->TextOut(1065,207+120,m_DanJia+L" 元/立方");
-			}
+			m_DanJia =L"";
+			m_dc->TextOut(1065,207+120,m_DanJia);
 		}
 		else
 		{
-			if(m_DanJia.IsEmpty() || m_DanJia==L"0")
-			{
-				m_DanJia = L"";
-				m_dc->TextOut(1065,207+120,m_DanJia);
-			}
-			else
-			{
-				m_dc->TextOut(1065,207+120,m_DanJia+L" 元/吨");
-			}
-			
+			m_dc->TextOut(1065,207+120,m_DanJia+L" 元/"+ m_DanJiaDanWei);
 		}
+//		if(m_CheXing.Compare(L"大车")==0)
+//		{
+//			if(m_DanJia.IsEmpty() || m_DanJia==L"0")
+//			{
+//				m_DanJia =L"";
+//				m_dc->TextOut(1065,207+120,m_DanJia);
+//			}
+//			else
+//			{
+//				m_dc->TextOut(1065,207+120,m_DanJia+L" 元/立方");
+//			}
+//		}
+//		else
+//		{
+//			if(m_DanJia.IsEmpty() || m_DanJia==L"0")
+//			{
+//				m_DanJia = L"";
+//				m_dc->TextOut(1065,207+120,m_DanJia);
+//			}
+//			else
+//			{
+//				m_dc->TextOut(1065,207+120,m_DanJia+L" 元/吨");
+//			}			
+//		}
 
 		// 第五行
-		m_dc->TextOut(80,207+160,CString("货物规格"));
+		m_dc->TextOut(80,207+160,CString("规格"));
 		m_dc->TextOut(395,207+160,m_GuiGe);
 
 		m_dc->TextOut(730,207+160,CString("金额"));
