@@ -34,6 +34,32 @@ public:
 		char com1_para[64]; // 串口1的参数
 	};
 
+	// 账单结构
+	struct BILL{
+		char DanHao[16]; // 单号
+		char CheHao[16]; // 车号
+		char CheXing[16]; // 车型
+		char DanWei[64]; // 收货单位
+		char DianHua[16]; // 电话
+		char HuoWu[32]; // 货物名称
+		char GuiGe[16]; // 货物规格
+		char PiZhong[16]; // 皮重
+		char MaoZhong[16]; // 毛重
+		char JingZhong[16]; // 净重
+		char DanJia[16]; // 单价
+		char DanJiaDanWei[16]; // 单价的单位
+		char MiDu[16]; // 密度
+		char JinE[16]; // 金额
+		char YuE[16]; // 余额
+		char BeiZhu[64]; // 备注
+		char GuoBang1[32]; // 过磅1时间
+		char GuoBang2[32]; // 过磅2时间
+		char ChuChang[32]; // 出场时间
+		char SiBangYuan[32]; // 司磅员
+		char BaoAnYuan[32]; // 保安员
+		char ZhuangTai[16]; // 状态
+	}bill;
+
 	struct DAYIN{
 		CString m_title; // 标题
 		CString m_id; // 单号
@@ -64,7 +90,6 @@ public:
 protected:
 	HICON m_hIcon;
 	_thread_com com1; // 创建串口1
-//	CString	m_e;
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
@@ -76,8 +101,6 @@ public:
 	unsigned char m_Weight[16]; // 重量的全局变量
 	int iWeight1,iWeight2;
 	int m_type; // 第一次或第二次过磅的类型 1为第一次 2位第二次
-	float m_midu; // 密度
-	CString m_danjiadanwei; // 单价单位
 
 	CONF conf;
 	// 车型
@@ -112,6 +135,7 @@ public:
 	CEdit m_zhongliang;
 	CButton m_btn_login;
 	CListCtrl m_list; // 车辆信息列表
+	CEdit m_CheShu; // 在场车数
 	afx_msg void OnBnClickedButtonComConn();
 	afx_msg void OnBnClickedButtonLogin();
 	afx_msg void OnBnClickedButtonLogout();
@@ -120,8 +144,6 @@ public:
 	CButton m_dayin;
 	afx_msg void OnBnClickedButtonDayin();
 	CButton m_tijiao;
-	void SetWindow();
-	void GetWindow();
 	afx_msg void OnBnClickedButtonGet();
 	afx_msg void OnBnClickedButtonEdit();
 
@@ -154,6 +176,9 @@ public:
 	static size_t cheliang_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得在场车辆返回数据
 	static size_t chehao_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得车号返回数据
 	void OnCheLiang(); // 车辆在场请求 
+	void ShowBill(); // 显示单据的数据
+	char strCheLiang[16*1024]; // 在场车辆信息的数据
+	int  PosCheLiang; // 在场车辆信息数据的位置
 	
-	
+	afx_msg void OnBnClickedButton5(); // 获得在场车辆信息
 };
