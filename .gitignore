@@ -12,6 +12,7 @@
 *.sdf
 *.aps
 *.idc
+*.xls
 debug
 release
 *.opensdf

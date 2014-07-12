@@ -218,7 +218,7 @@ BOOL CClientDlg::OnInitDialog()
 	fopen_s(&f,"config","rb"); // 配置文件 config
 	if(f==NULL)
 	{
-		MessageBox(_T("打开配置文件失败！"), _T("config"), MB_OK);
+		MessageBox(_T("打开配置文件失败！"), _T("config"), MB_ICONHAND);
 	}
 	else
 	{
@@ -244,7 +244,7 @@ BOOL CClientDlg::OnInitDialog()
 		}
 		else
 		{
-			MessageBox(_T("配置文件错误！"),_T("config"),MB_OK);
+			MessageBox(_T("配置文件错误！"),_T("config"),MB_ICONHAND);
 		}
 		cJSON_Delete(jsonroot);
 	}
@@ -391,15 +391,15 @@ BOOL CClientDlg::OnInitDialog()
 	m_list.SetExtendedStyle(dwStyle); // 设置扩展风格 
 
 	m_list.InsertColumn(0,L"单号",LVCFMT_CENTER,80);
-	m_list.InsertColumn(1,L"车号",LVCFMT_CENTER,80);
+	m_list.InsertColumn(1,L"车号",LVCFMT_RIGHT,80);
 	m_list.InsertColumn(2,L"车型",LVCFMT_CENTER,80);
-	m_list.InsertColumn(3,L"货物名称",LVCFMT_CENTER,80);
-	m_list.InsertColumn(4,L"货物规格",LVCFMT_CENTER,80);
-	m_list.InsertColumn(5,L"联系电话",LVCFMT_CENTER,100);
-	m_list.InsertColumn(6,L"收货单位",LVCFMT_CENTER,200);
-	m_list.InsertColumn(7,L"皮重",LVCFMT_CENTER,100);
-	m_list.InsertColumn(8,L"过磅时间",LVCFMT_CENTER,160);
-	m_list.InsertColumn(9,L"过磅",LVCFMT_CENTER,80);
+	m_list.InsertColumn(3,L"货物",LVCFMT_CENTER,80);
+	m_list.InsertColumn(4,L"规格",LVCFMT_CENTER,80);
+	m_list.InsertColumn(5,L"电话",LVCFMT_CENTER,100);
+	m_list.InsertColumn(6,L"客户",LVCFMT_CENTER,200);
+	m_list.InsertColumn(7,L"皮重",LVCFMT_RIGHT,100);
+	m_list.InsertColumn(8,L"第1次过磅时间",LVCFMT_CENTER,160);
+	m_list.InsertColumn(9,L"过磅次数",LVCFMT_CENTER,80);
 	
 	//return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 	return FALSE;
@@ -794,7 +794,7 @@ void CClientDlg::OnBnClickedButtonLogin()
 		if(cookies->next == NULL) // 判断是否有第二个cookie。这里应该判断AID。
 		{
 			m_isLogin = 0;
-			MessageBox(L"用户名或密码错误！！");
+			MessageBox(L"用户名或密码错误！！",L"登陆",MB_ICONHAND);
 			OnBnClickedButtonLogout(); // 登出
 			m_id.EnableWindow(FALSE); // 禁用
 			return; // 退出
@@ -807,7 +807,7 @@ void CClientDlg::OnBnClickedButtonLogin()
 	}
 	else
 	{
-		MessageBox(L"连接服务器超时，请检查服务器地址和端口是否正确。");
+		MessageBox(L"连接服务器超时，请检查服务器地址和端口是否正确。",L"连接",MB_ICONHAND);
 	}
 }
 
@@ -891,7 +891,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	{
 		if(strPiZhong.IsEmpty()) // 如果皮重为空
 		{
-			MessageBox(L"\"皮重\"不能为空，检查地磅线路等是否正常！",L"地磅");
+			MessageBox(L"\"皮重\"不能为空，检查地磅线路等是否正常！",L"地磅",MB_ICONASTERISK);
 			return;
 		}
 	}
@@ -899,7 +899,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	{
 		if(strJingZhong.IsEmpty())
 		{
-			MessageBox(L"\"净重\"不能为空，检查地磅线路等是否正常！",L"地磅");
+			MessageBox(L"\"净重\"不能为空，检查地磅线路等是否正常！",L"地磅",MB_ICONASTERISK);
 			return;
 		}
 	}
@@ -996,7 +996,7 @@ void CClientDlg::OnBnClickedButtonGet()
 		int i = _ttoi(strDanHao); // 将单号转为整数
 		if(i==0) // 如果单号全为0
 		{
-			MessageBox(L"单号不能全为：0");
+			MessageBox(L"单号不能全为：0",L"单号",MB_ICONHAND);
 			return;
 		}
 		m_post_id = 5; // 根据单号查单据
@@ -1236,7 +1236,7 @@ void CClientDlg::OnBnClickedButtonJiaojie()
 	m_user.GetWindowText(strUser); // 获得用户名
 	if(strUser.Compare(L"")==0)
 	{
-		MessageBox(L"请先登录，再下载！！");
+		MessageBox(L"请先登录，再下载！！",L"交接班报表",MB_ICONHAND);
 		return;
 	}
 
@@ -1288,7 +1288,7 @@ void CClientDlg::OnBnClickedButtonJiaojie()
 	res = curl_easy_perform(curl);
 	if(res==0)
 	{
-		MessageBox(L"文件保存成功！！");
+		MessageBox(L"文件保存成功！！",L"下载报表",MB_ICONASTERISK);
 	}
 	fclose(fp);
 }
@@ -1601,7 +1601,7 @@ size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 			char *strid = cJSON_GetObjectItem(jsonroot,"id")->valuestring;
 			if(strcmp(strid,"0")==0)
 			{
-				client->MessageBox(L"无此单号！！！");
+				client->MessageBox(L"无此单号！！！",L"单号",MB_ICONHAND);
 				return size*nmemb; // 返回函数
 			}
 
@@ -1648,13 +1648,19 @@ size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
 	// 这里判断提交是否成功
 	if(strcmp(str,"post1")==0)
 	{
-		client->MessageBox(L"第一次过磅提交成功！");
+		client->MessageBox(L"第一次过磅提交成功！",L"提交",MB_ICONASTERISK);
 	}
 
 	if(strcmp(str,"post2")==0)
 	{
-		client->MessageBox(L"第二次过磅提交成功！");
+		client->MessageBox(L"第二次过磅提交成功！",L"提交",MB_ICONASTERISK);
 	}
+
+	if(strcmp(str,"ERROR")==0)
+	{
+		client->MessageBox(L"提交失败！！！\n数据库中已存在，或服务端出错。",L"提交",MB_ICONHAND);
+	}
+
 	client->m_dayin.EnableWindow(TRUE);
 	return size*nmemb;
 }
