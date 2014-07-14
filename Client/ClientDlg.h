@@ -104,6 +104,8 @@ public:
 	int iWeight1,iWeight2;
 	int m_type; // 第一次或第二次过磅的类型 1为第一次 2位第二次
 
+	CList<CString,CString> m_UserList; // 用户名列表
+
 	CONF conf;
 	// 车型
 	CComboBox m_chexing;
@@ -120,7 +122,7 @@ public:
 	CEdit m_port;
 	CEdit m_com1;
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	CEdit m_user;
+	CComboBox m_user;
 	CEdit m_pwd;
 	CEdit m_id;
 	CEdit m_chehao;
@@ -189,4 +191,6 @@ public:
 	CDateTimeCtrl m_Date_End;
 	
 	afx_msg void OnBnClickedButton5(); // 获得在场车辆信息
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnCbnSelchangeEditUser();
 };

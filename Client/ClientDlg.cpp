@@ -131,6 +131,8 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &CClientDlg::OnNMDblclkList1)
 	ON_BN_CLICKED(IDC_BUTTON_QUXIAO, &CClientDlg::OnBnClickedButtonQuxiao)
 	ON_BN_CLICKED(IDC_BUTTON5, &CClientDlg::OnBnClickedButton5)
+	ON_WM_CTLCOLOR()
+	ON_CBN_SELCHANGE(IDC_EDIT_USER, &CClientDlg::OnCbnSelchangeEditUser)
 END_MESSAGE_MAP()
 
 
@@ -176,7 +178,7 @@ BOOL CClientDlg::OnInitDialog()
 	memset(strCheLiang,0,16*1024);
 	PosCheLiang=0;
 
-	// Date Time Ctrl
+	// Date Time Ctrl 报表时间控件
 	m_Date_Start.SetFormat(L"yyyy-MM-dd HH:mm:ss");
 	m_Date_End.SetFormat(L"yyyy-MM-dd HH:mm:ss");
 
@@ -232,7 +234,7 @@ BOOL CClientDlg::OnInitDialog()
 		if(jsonroot)
 		{
 			strcpy_s(conf.title,cJSON_GetObjectItem(jsonroot,"title")->valuestring); // 获得标题
-			strcpy_s(conf.path,cJSON_GetObjectItem(jsonroot,"path")->valuestring); // 获得标题
+			strcpy_s(conf.path,cJSON_GetObjectItem(jsonroot,"path")->valuestring); // 获得报表保存的路径
 
 			cJSON *jsonServer=cJSON_GetObjectItem(jsonroot,"server");//取 Server
 			strcpy_s(conf.ip,cJSON_GetObjectItem(jsonServer,"ip")->valuestring); // 获得IP地址
@@ -250,6 +252,32 @@ BOOL CClientDlg::OnInitDialog()
 	}
 
 	USES_CONVERSION;
+	// 打开用户名文件
+	fopen_s(&f,"user.dat","rt"); // 只读
+	if(f!=NULL)
+	{
+		m_user.ResetContent();
+		while(!feof(f)) // 是否到文件尾
+		{
+			char user[32] = {0};
+			fgets(user,16,f); // 按行读取用户名
+			for (int i = 0; user[i]; i++) // 消除字符串后面的回车换行符号
+			{
+				if (user[i] == '\n' || user[i] == '\r') 
+				{
+					user[i] = 0;
+					break;
+				}
+			}
+			m_user.AddString(A2W(user)); // 将用户名加入用户列表
+			m_UserList.AddTail(A2W(user)); // 添加用户名的链表中
+		}
+		m_user.SetCurSel(0); // 选择第一项作为默认选择
+		fclose(f); // 关闭文件
+	} // 剩下的处理在登陆成功后
+	
+
+	
 	// 显示网络服务器的IP地址和端口
 	m_ip.SetWindowText(A2CW(conf.ip));
 	char port[8] = {0};
@@ -282,8 +310,27 @@ BOOL CClientDlg::OnInitDialog()
 		FF_SWISS,				// 字符间距和字体族
 		_T("隶书"));				// 字体名称
 
+		// 实时重量的字体
+		CFont *m_Font2;
+		m_Font2 = new CFont; 
+		m_Font2->CreateFont(
+		60, // 字体高度
+		25,	// 字体宽度
+		0,	// 文本行的倾斜度
+		0,	// 字符基线的倾斜度
+		200,	// 字体的粗细
+		FALSE,	// 是否斜体
+		FALSE,	// 是否下划线
+		0,		// 是否删除线
+		ANSI_CHARSET,			// 字体的字符集
+		OUT_DEFAULT_PRECIS,		// 字符的输出精度
+		CLIP_DEFAULT_PRECIS,	// 字符的裁剪精度
+		DEFAULT_QUALITY,		// 字符的输出质量
+		FF_SWISS,				// 字符间距和字体族
+		_T("Arial Black"));		// 字体名称
+
 	// 重量
-	GetDlgItem(IDC_EDIT_ZHONGLIANG)->SetFont(m_Font);
+	GetDlgItem(IDC_EDIT_ZHONGLIANG)->SetFont(m_Font2);
 
 	// 标题
 	GetDlgItem(IDC_EDIT_TITLE)->SetWindowText(A2CW(conf.title));
@@ -596,7 +643,7 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 	iWeight2 = atoi((char*)m_Weight); // 将字符型重量的值转换为数字型
 	CString strWeight;
 	strWeight.Format(_T("%d"),iWeight2);
-	m_zhongliang.SetWindowText(strWeight+L"KG"); // 实时显示重量
+	m_zhongliang.SetWindowText(strWeight); // 实时显示重量
 
 	return 0;
 }
@@ -782,6 +829,7 @@ void CClientDlg::OnBnClickedButtonLogin()
 	CURLcode res;
 	
 	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5); // 如果5秒内无法连接，则直接退出。
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, login_data);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
 	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,"");
@@ -791,6 +839,11 @@ void CClientDlg::OnBnClickedButtonLogin()
 	{
 		struct curl_slist *cookies = NULL;
 		curl_easy_getinfo(curl,CURLINFO_COOKIELIST,&cookies);
+		if(cookies == NULL)
+		{
+			MessageBox(L"登陆失败！\n未返回Cookie数据。",L"登陆",MB_ICONHAND);
+			return; // 退出
+		}
 		if(cookies->next == NULL) // 判断是否有第二个cookie。这里应该判断AID。
 		{
 			m_isLogin = 0;
@@ -801,7 +854,36 @@ void CClientDlg::OnBnClickedButtonLogin()
 		}
 		else
 		{
-			m_isLogin = 1;
+			m_isLogin = 1; // 登陆成功
+
+			// 处理用户名文件 user.dat
+			FILE *f;
+			fopen_s(&f,"user.dat","wt");
+			if(f!=NULL)
+			{
+				POSITION pos = m_UserList.GetHeadPosition(); // 获得链表的头位置
+				CString strUser1,strUser2;
+				m_user.GetWindowText(strUser1);
+				m_UserList.AddTail(strUser1); // 添加到链表尾
+				char *str = W2A(strUser1); // 转换格式
+				fputs(str,f); // 写入一行文本
+				fputs("\n",f); // 写入回车换行
+				while(pos != NULL) // 循环用户名链表
+				{
+					strUser2 = m_UserList.GetNext(pos); // 获得链表的内容
+					if(strUser1.Compare(strUser2)!=0) // 比较登陆的用户是否等于链表中的用户
+					{
+						if(strUser2.Compare(L"")==0) break;
+						m_UserList.AddTail(strUser1); // 不在链表中则添加到链表尾
+						str = W2A(strUser2);
+						fputs(str,f); // 写入一行文本
+						fputs("\n",f); // 写入回车换行
+					}
+				}
+				fclose(f); // 关闭文件
+			}
+
+			
 		}
 		OnCbnSelchangeComboHuowu(); // 获得货物对应的规格数据
 	}
@@ -816,6 +898,7 @@ void CClientDlg::OnBnClickedButtonLogout()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	m_isLogin = 0; 
+
 	OnBnClickedButtonQuxiao(); // 调用“取消”按钮
 	m_id.EnableWindow(FALSE); // 禁用“单号”输入框
 	m_list.DeleteAllItems(); // 清空LIST所有内容
@@ -889,17 +972,17 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	// 如果毛重为空，表示第一次提交
 	if(strMaoZhong.IsEmpty())
 	{
-		if(strPiZhong.IsEmpty()) // 如果皮重为空
+		if(strPiZhong.IsEmpty()||strJingZhong.Compare(L"0")==0) // 如果皮重为空
 		{
-			MessageBox(L"\"皮重\"不能为空，检查地磅线路等是否正常！",L"地磅",MB_ICONASTERISK);
+			MessageBox(L"\"皮重\"不能为0或空，检查地磅线路等是否正常！",L"地磅",MB_ICONASTERISK);
 			return;
 		}
 	}
 	else // 第二次提交
 	{
-		if(strJingZhong.IsEmpty())
+		if(strJingZhong.IsEmpty()||strJingZhong.Compare(L"0")==0)
 		{
-			MessageBox(L"\"净重\"不能为空，检查地磅线路等是否正常！",L"地磅",MB_ICONASTERISK);
+			MessageBox(L"\"净重\"不能为0或空，检查地磅线路等是否正常！",L"地磅",MB_ICONASTERISK);
 			return;
 		}
 	}
@@ -1643,22 +1726,34 @@ size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
 	CClientDlg *client =(CClientDlg*)userp;
 	printf("%s\n",ptr);
 
+	USES_CONVERSION;
+
 	char str[16]={0};
 	memcpy(str,ptr,5);
 	// 这里判断提交是否成功
 	if(strcmp(str,"post1")==0)
 	{
 		client->MessageBox(L"第一次过磅提交成功！",L"提交",MB_ICONASTERISK);
+		client->m_tijiao.EnableWindow(FALSE);
 	}
 
 	if(strcmp(str,"post2")==0)
 	{
 		client->MessageBox(L"第二次过磅提交成功！",L"提交",MB_ICONASTERISK);
+		client->m_tijiao.EnableWindow(FALSE);
 	}
 
 	if(strcmp(str,"ERROR")==0)
 	{
-		client->MessageBox(L"提交失败！！！\n数据库中已存在，或服务端出错。",L"提交",MB_ICONHAND);
+		char str[512] ={0};
+		char * temp = (char*)ptr;
+		temp+=8;
+		memcpy(str,(void*)temp,size*nmemb);
+		str[511] = 0x00;
+		CString strMsg;
+		strMsg.Format(L"提交失败：\n%s",A2W(str));
+		client->MessageBox(strMsg,L"提交",MB_ICONHAND);
+		client->m_tijiao.EnableWindow(TRUE);
 	}
 
 	client->m_dayin.EnableWindow(TRUE);
@@ -1670,7 +1765,7 @@ size_t CClientDlg::guige_data(void *ptr, size_t size, size_t nmemb, void *userp)
 {
 	CClientDlg *client =(CClientDlg*)userp;
 
-	USES_CONVERSION;  // dali
+	USES_CONVERSION;
 	cJSON *jsonroot = cJSON_Parse((const char*)ptr); //json根
 	if(jsonroot)
 	{
@@ -1745,7 +1840,7 @@ void CClientDlg::OnCheLiang()
 
 		CURLcode res;
 		curl_easy_setopt(curl,CURLOPT_URL,url);
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 20);
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cheliang_data);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, this); 
 		res = curl_easy_perform(curl);
@@ -1790,8 +1885,11 @@ void CClientDlg::OnCheLiang()
 			}
 			cJSON_Delete(jsonroot);
 		}
+		else
+		{
+			MessageBox(L"下载超时！！！",L"下载报表",MB_ICONHAND);
+		}
 	}
-	
 }
 
 // 显示单据的数据
@@ -1825,4 +1923,27 @@ size_t CClientDlg::report_data(void *ptr, size_t size, size_t nmemb, void *userp
 {
 	int written = fwrite(ptr, size, nmemb , (FILE *)userp); // 写入文件
     return written; 
+}
+
+// 控件颜色处理
+HBRUSH CClientDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	// TODO:  在此更改 DC 的任何特性
+	if (GetDlgItem(IDC_EDIT_ZHONGLIANG) == pWnd) // 重量文本框控件
+	{
+		static HBRUSH   hbrEdit = ::CreateSolidBrush( RGB(255,255,128) ); // 背景颜色
+		pDC->SetBkMode( TRANSPARENT ); 
+		pDC->SetTextColor( RGB(255,0,0));// 字体颜色
+		return hbrEdit;
+     }
+	// TODO:  如果默认的不是所需画笔，则返回另一个画笔
+	return hbr;
+}
+
+// 操作员下拉选择处理
+void CClientDlg::OnCbnSelchangeEditUser()
+{
+	// TODO: 在此添加控件通知处理程序代码
 }
