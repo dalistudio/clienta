@@ -102,64 +102,59 @@ protected:
 public:
 	unsigned char m_Weight[16]; // 重量的全局变量
 	int iWeight1,iWeight2;
-	int m_type; // 第一次或第二次过磅的类型 1为第一次 2位第二次
 
 	CList<CString,CString> m_UserList; // 用户名列表
 
 	CONF conf;
-	// 车型
-	CComboBox m_chexing;
-	// 货物
-	CComboBox m_huowu;
-	// 规格
-	CComboBox m_guige;
+	CComboBox m_chexing; // 车型
+	CComboBox m_huowu; // 货物
+	CComboBox m_guige; // 规格
 
-	afx_msg void OnBnClickedButtonCom();
-	afx_msg void OnBnClickedButtonCom1Send();
+	afx_msg void OnBnClickedButtonCom1Send(); // 串口按钮
 	afx_msg void OnBnClickedButtonZhongliang(); // 取重量
 
-	CEdit m_ip;
-	CEdit m_port;
-	CEdit m_com1;
+	CEdit m_ip; // IP地址
+	CEdit m_port; // 端口
+	CEdit m_com1; // 串口
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	CComboBox m_user;
-	CEdit m_pwd;
-	CEdit m_id;
-	CEdit m_chehao;
-	CEdit m_dianhua;
-	CComboBox m_shouhuo;
-	CEdit m_pizhong;
-	CEdit m_maozhong;
-	CEdit m_jingzhong;
-	CEdit m_danjia;
-	CEdit m_jine;
-	CEdit m_yue;
-	CButton m_shoudong;
-	CButton m_youhui;
-	CEdit m_zhongliang;
-	CButton m_btn_login;
+	CComboBox m_user; // 用户
+	CEdit m_pwd; // 密码
+	CEdit m_id; // 单号
+	CEdit m_chehao; // 车号
+	CEdit m_dianhua; // 电话
+	CComboBox m_shouhuo; // 收货
+	CEdit m_pizhong; // 皮重
+	CEdit m_maozhong; // 毛重
+	CEdit m_jingzhong; // 净重
+	CEdit m_danjia; // 单价
+	CEdit m_jine; // 金额
+	CEdit m_yue; // 余额
+	CButton m_shoudong; // 手动
+	CButton m_youhui; // 优惠
+	CEdit m_zhongliang; // 重量
+	CButton m_btn_login; // 登陆按钮
+	CButton m_gaidan; // 改单按钮
 	CListCtrl m_list; // 车辆信息列表
 	CEdit m_CheShu; // 在场车数
-	afx_msg void OnBnClickedButtonComConn();
-	afx_msg void OnBnClickedButtonLogin();
-	afx_msg void OnBnClickedButtonLogout();
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
-	afx_msg void OnBnClickedButtonTijiao();
-	CButton m_dayin;
-	afx_msg void OnBnClickedButtonDayin();
-	CButton m_tijiao;
-	afx_msg void OnBnClickedButtonGet();
-	afx_msg void OnBnClickedButtonEdit();
+	afx_msg void OnBnClickedButtonComConn(); // 打开串口按钮
+	afx_msg void OnBnClickedButtonLogin(); // 登陆按钮
+	afx_msg void OnBnClickedButtonLogout(); // 登出按钮
+	afx_msg void OnTimer(UINT_PTR nIDEvent); // 定时器
+	afx_msg void OnBnClickedButtonTijiao(); // 单击提交按钮
+	CButton m_dayin; // 打印按钮
+	afx_msg void OnBnClickedButtonDayin(); // 单击打印按钮
+	CButton m_tijiao; // 提交按钮
+	afx_msg void OnBnClickedButtonGet(); // 单击获取按钮
+	afx_msg void OnBnClickedButtonEdit(); // 单击编辑按钮
 
 	// 打印相关
-	LRESULT OnBeginPrinting(WPARAM wParam,LPARAM lParam);
-	LRESULT OnEndPrinting(WPARAM wParam,LPARAM lParam);
+	LRESULT OnBeginPrinting(WPARAM wParam,LPARAM lParam); // 打印开始
+	LRESULT OnEndPrinting(WPARAM wParam,LPARAM lParam); // 打印结束
 	LRESULT OnMyPrint(WPARAM wParam,LPARAM lParam);//真正打印内容
-	void DoPrint();
-	std::tr1::shared_ptr<CPrinter> m_printer;
+	void DoPrint(); // 执行打印
+	std::tr1::shared_ptr<CPrinter> m_printer; // 打印共享指针
 	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
-//	afx_msg void OnBnClickedButtonFind();
-	afx_msg void OnBnClickedButtonJiaojie();
+	afx_msg void OnBnClickedButtonJiaojie(); // 单击交接按钮
 
 	void CalcJinE(); // 计算金额
 	afx_msg void OnEnChangeEditDanjia();
@@ -192,5 +187,5 @@ public:
 	
 	afx_msg void OnBnClickedButton5(); // 获得在场车辆信息
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnCbnSelchangeEditUser();
+	afx_msg void OnBnClickedButtonGaidan();
 };

@@ -94,6 +94,7 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK2, m_youhui);
 	DDX_Control(pDX, IDC_EDIT_ZHONGLIANG, m_zhongliang);
 	DDX_Control(pDX, IDC_BUTTON_LOGIN, m_btn_login);
+	DDX_Control(pDX, IDC_BUTTON_GAIDAN, m_gaidan);
 	DDX_Control(pDX, IDC_BUTTON_DAYIN, m_dayin);
 	DDX_Control(pDX, IDC_BUTTON_TIJIAO, m_tijiao);
 	DDX_Control(pDX, IDC_LIST1, m_list); // 车辆信息
@@ -118,9 +119,6 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_DAYIN, &CClientDlg::OnBnClickedButtonDayin)
 	ON_BN_CLICKED(IDC_BUTTON_GET, &CClientDlg::OnBnClickedButtonGet)
 	ON_BN_CLICKED(IDC_BUTTON_EDIT, &CClientDlg::OnBnClickedButtonEdit)
-
-//	ON_WM_ACTIVATE()
-//	ON_BN_CLICKED(IDC_BUTTON_FIND, &CClientDlg::OnBnClickedButtonFind)
 	ON_BN_CLICKED(IDC_BUTTON_JIAOJIE, &CClientDlg::OnBnClickedButtonJiaojie)
 	ON_EN_CHANGE(IDC_EDIT_DANJIA, &CClientDlg::OnEnChangeEditDanjia)
 	ON_EN_CHANGE(IDC_EDIT_JINGZHONG, &CClientDlg::OnEnChangeEditJingzhong)
@@ -132,7 +130,7 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_QUXIAO, &CClientDlg::OnBnClickedButtonQuxiao)
 	ON_BN_CLICKED(IDC_BUTTON5, &CClientDlg::OnBnClickedButton5)
 	ON_WM_CTLCOLOR()
-	ON_CBN_SELCHANGE(IDC_EDIT_USER, &CClientDlg::OnCbnSelchangeEditUser)
+	ON_BN_CLICKED(IDC_BUTTON_GAIDAN, &CClientDlg::OnBnClickedButtonGaidan)
 END_MESSAGE_MAP()
 
 
@@ -186,7 +184,6 @@ BOOL CClientDlg::OnInitDialog()
 	memset(m_dibang_data,0,32); // 清空地磅数据
 	m_dibang_data_pos = 0; // 地磅数据的位置
 	m_Start = 0; // 是否开始收集地磅数据
-	m_type = 0;
 	iWeight1 = 0;
 	iWeight2 = 0;
 
@@ -930,11 +927,6 @@ void CClientDlg::OnTimer(UINT_PTR nIDEvent)
 void CClientDlg::OnBnClickedButtonTijiao()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	// 第一次提交：m_post_id = 4; 
-	// 第二次提交：m_post_id = 6; 
-	// 需要判断是第一次提交还是第二次提交
-	
-
 	USES_CONVERSION;
 
 	CString strDanHao,strCheHao,strCheXing; // 单号，车号，车型
@@ -970,15 +962,15 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	}
 
 	// 如果毛重为空，表示第一次提交
-	if(strMaoZhong.IsEmpty())
+	if(m_post_id==1 || m_post_id==3)
 	{
-		if(strPiZhong.IsEmpty()||strJingZhong.Compare(L"0")==0) // 如果皮重为空
+		if(strPiZhong.IsEmpty()||strPiZhong.Compare(L"0")==0) // 如果皮重为空
 		{
 			MessageBox(L"\"皮重\"不能为0或空，检查地磅线路等是否正常！",L"地磅",MB_ICONASTERISK);
 			return;
 		}
 	}
-	else // 第二次提交
+	else if(m_post_id==2)// 第二次提交
 	{
 		if(strJingZhong.IsEmpty()||strJingZhong.Compare(L"0")==0)
 		{
@@ -1072,7 +1064,7 @@ void CClientDlg::OnBnClickedButtonGet()
 	if(strDanHao.IsEmpty())
 	{
 		strDanHao = L"0";
-		m_post_id = 3; // 获得新单号
+		m_post_id = 1; // 获得新单号
 	}
 	else
 	{
@@ -1082,7 +1074,7 @@ void CClientDlg::OnBnClickedButtonGet()
 			MessageBox(L"单号不能全为：0",L"单号",MB_ICONHAND);
 			return;
 		}
-		m_post_id = 5; // 根据单号查单据
+		m_post_id = 2; // 根据单号查单据
 	}
 
 	char url[256]={0};
@@ -1104,10 +1096,28 @@ void CClientDlg::OnBnClickedButtonGet()
 	if(res == CURLE_OK)
 	{
 		// 显示单据的数据
-		if(m_type==2)ShowBill();
+		if(m_post_id==2)ShowBill();
+		if(strcmp(bill.ZhuangTai,"0")==0) // 如果已经第一次提交
+		{
+			m_chehao.EnableWindow(FALSE); // 禁用车号
+			m_chexing.EnableWindow(FALSE); // 禁用车型
+			m_huowu.EnableWindow(FALSE); // 禁用货物
+			m_guige.EnableWindow(FALSE); // 禁用规格
+			m_shouhuo.EnableWindow(FALSE); // 禁用单位
+
+			m_gaidan.EnableWindow(TRUE); // 启用改单按钮
+		}
+
 		if(strcmp(bill.ZhuangTai,"1")==0) // 如果已经第二次提交，则禁止再提交数据。
 		{
+			m_chehao.EnableWindow(FALSE); // 禁用车号
+			m_chexing.EnableWindow(FALSE); // 禁用车型
+			m_huowu.EnableWindow(FALSE); // 禁用货物
+			m_guige.EnableWindow(FALSE); // 禁用规格
+			m_shouhuo.EnableWindow(FALSE); // 禁用单位
+
 			m_tijiao.EnableWindow(FALSE); // 禁用提交按钮
+			m_gaidan.EnableWindow(FALSE); // 禁用改单按钮
 		}
 	}
 }
@@ -1181,7 +1191,7 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_printer->m_JinE = DaYin.m_JinE; // 金额
 	m_printer->m_BeiZhu = DaYin.m_BeiZhu; // 备注
 	m_printer->m_User = DaYin.m_User; // 司磅员
-	m_printer->m_Times  = m_type; // 过磅次数
+	m_printer->m_Times  = m_post_id; // 过磅次数
 	
 	return TRUE;
 }
@@ -1294,23 +1304,6 @@ LRESULT CClientDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 void CClientDlg::OnBnClickedButtonJiaojie()
 {
 	// TODO: 在此添加控件通知处理程序代码
-/*
-//	SYSTEMTIME st;
-//	GetLocalTime(&st);
-	USES_CONVERSION;
-	CString strUser;
-	m_user.GetWindowText(strUser);
-	char str[1024]={0};
-	sprintf_s(str,"start http://");
-	sprintf_s(str,"%s%s/",str,conf.ip);
-	sprintf_s(str,"%sjiaojie.php?user=",str);
-	sprintf_s(str,"%s%s",str,W2A(strUser));
-//	sprintf_s(str,"%s%4d%02d%02d%%20%02d:%02d:%02d",str,st.wYear,st.wMonth,st.wDay,st.wHour-8,st.wMinute,st.wSecond); // 开始时间：设置为上班时间
-//	sprintf_s(str,"%s^&end=",str); // 注意在win的命令行批处理中'&'需要转意为'^&'
-//	sprintf_s(str,"%s%4d%02d%02d%%20%02d:%02d:%02d",str,st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond); // 结束时间: 设置为当前时间
-	system(str);
-*/
-
 	USES_CONVERSION;
 
 	CString strStart,strEnd,strUser;
@@ -1446,13 +1439,13 @@ void CClientDlg::OnBnClickedButtonZhongliang()
 	strWeight.Format(_T("%d"),iWeight);
 	// 设置第一次过磅和第二次过磅的皮重和毛重
 	// 皮重
-	if(m_type == 1)
+	if(m_post_id == 1)
 	{
 		m_pizhong.SetWindowText(strWeight); // 将值显示在皮重控件中。
 	}
 
 	// 毛重
-	if(m_type == 2)
+	if(m_post_id == 2)
 	{
 		m_maozhong.SetWindowText(strWeight); // 将值显示在毛重控件中。
 		// 净重 = 毛重 - 皮重 
@@ -1657,11 +1650,8 @@ size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 	cJSON *jsonroot = cJSON_Parse((const char*)ptr); //json根
 	if(jsonroot)
 	{
-		if(client->m_post_id ==3) // 获得新的单号
+		if(client->m_post_id ==1) // 获得新的单号
 		{
-			client->m_post_id = 4; // 第一次提交
-			client->m_type = 1;
-
 			client->m_id.SetWindowText(A2CW(cJSON_GetObjectItem(jsonroot,"id")->valuestring)); // 设置“单号”
 
 			client->m_chexing.SetCurSel(0); // 选择车型
@@ -1676,11 +1666,8 @@ size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 			client->m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
 			client->m_chehao.SetFocus(); // 设置车号为焦点
 		}
-		else if(client->m_post_id == 5) // 根据单号查询单据
+		else if(client->m_post_id == 2) // 根据单号查询单据
 		{
-			client->m_post_id = 6; // 第二次提交
-			client->m_type = 2;
-
 			char *strid = cJSON_GetObjectItem(jsonroot,"id")->valuestring;
 			if(strcmp(strid,"0")==0)
 			{
@@ -1711,6 +1698,7 @@ size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 			strcpy_s(client->bill.BaoAnYuan,UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"bay")->valuestring)); // 保安员
 			strcpy_s(client->bill.ZhuangTai,cJSON_GetObjectItem(jsonroot,"zt")->valuestring); // 状态
 
+
 			client->m_id.EnableWindow(FALSE); // 禁止“单号”对话框
 			client->m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
 			client->m_chehao.SetFocus(); // 设置车号为焦点
@@ -1740,6 +1728,12 @@ size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
 	if(strcmp(str,"post2")==0)
 	{
 		client->MessageBox(L"第二次过磅提交成功！",L"提交",MB_ICONASTERISK);
+		client->m_tijiao.EnableWindow(FALSE);
+	}
+
+	if(strcmp(str,"post3")==0)
+	{
+		client->MessageBox(L"改单成功！",L"提交",MB_ICONASTERISK);
 		client->m_tijiao.EnableWindow(FALSE);
 	}
 
@@ -1942,8 +1936,16 @@ HBRUSH CClientDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
-// 操作员下拉选择处理
-void CClientDlg::OnCbnSelchangeEditUser()
+// 改单按钮
+void CClientDlg::OnBnClickedButtonGaidan()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	m_post_id = 3; // 修改第一次单
+	m_chehao.EnableWindow(TRUE); // 启用车号
+	m_chexing.EnableWindow(TRUE); // 启用车型
+	m_huowu.EnableWindow(TRUE); // 启用货物
+	m_guige.EnableWindow(TRUE); // 启用规格
+	m_shouhuo.EnableWindow(TRUE); // 启用单位
+
+	m_danjia.SetWindowText(L""); // 设置单价为空
 }
