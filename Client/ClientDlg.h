@@ -134,6 +134,7 @@ public:
 	CEdit m_zhongliang; // 重量
 	CButton m_btn_login; // 登陆按钮
 	CButton m_gaidan; // 改单按钮
+	CButton m_jiaojie; // 交接按钮
 	CListCtrl m_list; // 车辆信息列表
 	CEdit m_CheShu; // 在场车数
 	afx_msg void OnBnClickedButtonComConn(); // 打开串口按钮

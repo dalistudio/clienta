@@ -72,35 +72,36 @@ CClientDlg::CClientDlg(CWnd* pParent /*=NULL*/)
 void CClientDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_COMBO_CHEXING, m_chexing);
-	DDX_Control(pDX, IDC_COMBO_HUOWU, m_huowu);
-	DDX_Control(pDX, IDC_COMBO_GUIGE, m_guige);
-	DDX_Control(pDX, IDC_EDIT_IP, m_ip);
-	DDX_Control(pDX, IDC_EDIT_PORT, m_port);
-	DDX_Control(pDX, IDC_EDIT_COM1, m_com1);
-	DDX_Control(pDX, IDC_EDIT_USER, m_user);
-	DDX_Control(pDX, IDC_EDIT_PWD, m_pwd);
-	DDX_Control(pDX, IDC_EDIT_DANHAO, m_id);
-	DDX_Control(pDX, IDC_EDIT_CHEHAO, m_chehao);
-	DDX_Control(pDX, IDC_EDIT_DIANHUA, m_dianhua);
-	DDX_Control(pDX, IDC_EDIT_SHOUHUO, m_shouhuo);
-	DDX_Control(pDX, IDC_EDIT_PIZHONG, m_pizhong);
-	DDX_Control(pDX, IDC_EDIT_MAOZHONG, m_maozhong);
-	DDX_Control(pDX, IDC_EDIT_JINGZHONG, m_jingzhong);
-	DDX_Control(pDX, IDC_EDIT_DANJIA, m_danjia);
-	DDX_Control(pDX, IDC_EDIT_JINE, m_jine);
-	DDX_Control(pDX, IDC_EDIT_YUE, m_yue);
-	DDX_Control(pDX, IDC_CHECK1, m_shoudong);
-	DDX_Control(pDX, IDC_CHECK2, m_youhui);
-	DDX_Control(pDX, IDC_EDIT_ZHONGLIANG, m_zhongliang);
-	DDX_Control(pDX, IDC_BUTTON_LOGIN, m_btn_login);
-	DDX_Control(pDX, IDC_BUTTON_GAIDAN, m_gaidan);
-	DDX_Control(pDX, IDC_BUTTON_DAYIN, m_dayin);
-	DDX_Control(pDX, IDC_BUTTON_TIJIAO, m_tijiao);
-	DDX_Control(pDX, IDC_LIST1, m_list); // 车辆信息
+	DDX_Control(pDX, IDC_COMBO_CHEXING, m_chexing); // 车型
+	DDX_Control(pDX, IDC_COMBO_HUOWU, m_huowu); // 货物
+	DDX_Control(pDX, IDC_COMBO_GUIGE, m_guige); // 规格
+	DDX_Control(pDX, IDC_EDIT_IP, m_ip); // IP地址
+	DDX_Control(pDX, IDC_EDIT_PORT, m_port); // 端口
+	DDX_Control(pDX, IDC_EDIT_COM1, m_com1); // 串口
+	DDX_Control(pDX, IDC_EDIT_USER, m_user); // 用户
+	DDX_Control(pDX, IDC_EDIT_PWD, m_pwd); // 密码
+	DDX_Control(pDX, IDC_EDIT_DANHAO, m_id); // 单号
+	DDX_Control(pDX, IDC_EDIT_CHEHAO, m_chehao); // 车号
+	DDX_Control(pDX, IDC_EDIT_DIANHUA, m_dianhua); // 电话
+	DDX_Control(pDX, IDC_EDIT_SHOUHUO, m_shouhuo); // 单位
+	DDX_Control(pDX, IDC_EDIT_PIZHONG, m_pizhong); // 皮重
+	DDX_Control(pDX, IDC_EDIT_MAOZHONG, m_maozhong); // 毛重
+	DDX_Control(pDX, IDC_EDIT_JINGZHONG, m_jingzhong); // 净重
+	DDX_Control(pDX, IDC_EDIT_DANJIA, m_danjia); // 单价
+	DDX_Control(pDX, IDC_EDIT_JINE, m_jine); // 金额
+	DDX_Control(pDX, IDC_EDIT_YUE, m_yue); // 余额
+	DDX_Control(pDX, IDC_CHECK1, m_shoudong); // 手动皮重
+	DDX_Control(pDX, IDC_CHECK2, m_youhui); // 优惠金额
+	DDX_Control(pDX, IDC_EDIT_ZHONGLIANG, m_zhongliang); // 重量
+	DDX_Control(pDX, IDC_BUTTON_LOGIN, m_btn_login); // 登陆按钮
+	DDX_Control(pDX, IDC_BUTTON_GAIDAN, m_gaidan); // 改单按钮
+	DDX_Control(pDX, IDC_BUTTON_JIAOJIE, m_jiaojie); // 交接按钮
+	DDX_Control(pDX, IDC_BUTTON_DAYIN, m_dayin); // 打印按钮
+	DDX_Control(pDX, IDC_BUTTON_TIJIAO, m_tijiao); // 提交按钮
+	DDX_Control(pDX, IDC_LIST1, m_list); // 车辆信息列表
 	DDX_Control(pDX, IDC_CHESHU, m_CheShu); // 在场车数
-	DDX_Control(pDX, IDC_DATE_START, m_Date_Start);
-	DDX_Control(pDX, IDC_DATE_END, m_Date_End);
+	DDX_Control(pDX, IDC_DATE_START, m_Date_Start); // 开始时间
+	DDX_Control(pDX, IDC_DATE_END, m_Date_End); // 结束时间
 }
 
 BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
@@ -788,14 +789,14 @@ void CClientDlg::OnBnClickedButtonComConn()
 	if(!com1.open(conf.com1_id,conf.com1_para))
 	{
 		m_com1.SetWindowText(_T("打开失败"));
-//		MessageBox("串口1打开失败", "串口", MB_OK);
+		MessageBox(L"串口打开失败", L"串口", MB_ICONHAND);
 	}
 	else
 	{
 		com1.set_hwnd(m_hWnd);
 		char tmp[64] = {0};
 		sprintf_s(tmp,"COM%d:%s",conf.com1_id,conf.com1_para);
-		USES_CONVERSION;  // dali
+		USES_CONVERSION;
 		m_com1.SetWindowText(A2CW(tmp));
 	}
 }
@@ -954,11 +955,11 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	strBeiZhu = L"";
 	if(m_shoudong.GetCheck())
 	{
-		strBeiZhu += L"手动皮重 ";
+		strBeiZhu += L"皮 ";
 	}
 	if(m_youhui.GetCheck())
 	{
-		strBeiZhu += L"优惠金额 ";
+		strBeiZhu += L"惠 ";
 	}
 
 	// 如果毛重为空，表示第一次提交
@@ -1039,11 +1040,11 @@ void CClientDlg::OnBnClickedButtonDayin()
 	DaYin.m_BeiZhu = L"";
 	if(m_shoudong.GetCheck())
 	{
-		DaYin.m_BeiZhu += L"手动皮重 ";
+		DaYin.m_BeiZhu += L"皮 ";
 	}
 	if(m_youhui.GetCheck())
 	{
-		DaYin.m_BeiZhu += L"优惠金额 ";
+		DaYin.m_BeiZhu += L"惠 ";
 	}
 	m_user.GetWindowText(DaYin.m_User);
 
@@ -1166,11 +1167,11 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	DaYin.m_BeiZhu = L"";
 	if(m_shoudong.GetCheck())
 	{
-		DaYin.m_BeiZhu += L"手动皮重 ";
+		DaYin.m_BeiZhu += L"皮 ";
 	}
 	if(m_youhui.GetCheck())
 	{
-		DaYin.m_BeiZhu += L"优惠金额 ";
+		DaYin.m_BeiZhu += L"惠 ";
 	}
 	m_user.GetWindowText(DaYin.m_User);
 
@@ -1294,12 +1295,6 @@ LRESULT CClientDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 	return CDialogEx::WindowProc(message, wParam, lParam);
 }
 
-// 查询按钮
-//void CClientDlg::OnBnClickedButtonFind()
-//{
-//	// TODO: 在此添加控件通知处理程序代码
-//}
-
 // 交接班按钮
 void CClientDlg::OnBnClickedButtonJiaojie()
 {
@@ -1315,6 +1310,9 @@ void CClientDlg::OnBnClickedButtonJiaojie()
 		MessageBox(L"请先登录，再下载！！",L"交接班报表",MB_ICONHAND);
 		return;
 	}
+
+	m_jiaojie.EnableWindow(FALSE); // 禁用下载报表按钮
+	m_jiaojie.SetWindowText(L"正在下载...");
 
 	// 获得程序运行的当前路径
 	CString strPath;
@@ -1357,16 +1355,24 @@ void CClientDlg::OnBnClickedButtonJiaojie()
 
 	CURLcode res;
 	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60); // 如果1分钟内无法连接，则直接退出。
 	curl_easy_setopt(curl, CURLOPT_POST, 1L);  
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data); // POST 的数据
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, report_data); // 提交返回的数据
 	curl_easy_setopt( curl, CURLOPT_WRITEDATA, fp ); 
 	res = curl_easy_perform(curl);
+
+	fclose(fp); // 关闭文件，提前关闭，避免等待关闭通知框
 	if(res==0)
 	{
 		MessageBox(L"文件保存成功！！",L"下载报表",MB_ICONASTERISK);
 	}
-	fclose(fp);
+	else
+	{
+		MessageBox(L"下载超时，失败！！",L"下载报表",MB_ICONASTERISK);
+	}
+	m_jiaojie.SetWindowText(L"下载报表(&R)");
+	m_jiaojie.EnableWindow(TRUE); // 启用下载报表按钮
 }
 
 // 修改单价

@@ -230,30 +230,6 @@ void CPrinter::PrintBody()
 		{
 			m_dc->TextOut(1065,207+120,m_DanJia+L" 元/"+ m_DanJiaDanWei);
 		}
-//		if(m_CheXing.Compare(L"大车")==0)
-//		{
-//			if(m_DanJia.IsEmpty() || m_DanJia==L"0")
-//			{
-//				m_DanJia =L"";
-//				m_dc->TextOut(1065,207+120,m_DanJia);
-//			}
-//			else
-//			{
-//				m_dc->TextOut(1065,207+120,m_DanJia+L" 元/立方");
-//			}
-//		}
-//		else
-//		{
-//			if(m_DanJia.IsEmpty() || m_DanJia==L"0")
-//			{
-//				m_DanJia = L"";
-//				m_dc->TextOut(1065,207+120,m_DanJia);
-//			}
-//			else
-//			{
-//				m_dc->TextOut(1065,207+120,m_DanJia+L" 元/吨");
-//			}			
-//		}
 
 		// 第五行
 		m_dc->TextOut(80,207+160,CString("规格"));
@@ -281,18 +257,17 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(600,450,CString("客户签名："));
 		m_dc->TextOut(1000,450,CString("司机签名："));
 
-		if(m_Times==1) // 第一次过磅
-		{
-			m_dc->TextOut(60,500,CString("白：存根联"));
-			m_dc->TextOut(375,500,CString("红：进料联"));
-		}
-		if(m_Times==2) // 第二次过磅
-		{
-			m_dc->TextOut(60,500,CString("白：保安联"));
-			m_dc->TextOut(375,500,CString("红：存根联"));
-			m_dc->TextOut(690,500,CString("绿：财务联"));
-			m_dc->TextOut(1005,500,CString("黄：客户联"));
-		}
+//		if(m_Times==1) // 第一次过磅
+//		{
+//			m_dc->TextOut(60,500,CString("白：存根联"));
+//			m_dc->TextOut(375,500,CString("红：进料联"));
+//		}
+//		if(m_Times==2) // 第二次过磅
+//		{
+//			m_dc->TextOut(60,500,CString("白：保安联"));
+//			m_dc->TextOut(600,500,CString("红：存根联"));
+//			m_dc->TextOut(1000,500,CString("绿：客户联"));
+//		}
 
 		// 条形码
 		USES_CONVERSION;
