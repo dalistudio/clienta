@@ -45,6 +45,7 @@ public:
 	CString m_BeiZhu; // 备注
 	CString m_User; // 司磅员
 	int m_Times; // 过磅次数
+	int m_Type; // 支持类型
 
 
 	void PreparePrinting();	//设置字体，根据dc计算一些参数

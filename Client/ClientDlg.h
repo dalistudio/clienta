@@ -6,7 +6,7 @@
 #include "afxwin.h"
 #include "afxcmn.h"
 #include <memory>
-#include "Com_class.h"
+#include "CnComm.h"
 #include "io.h"
 #include "printer.h"
 #include "Resource.h"
@@ -19,6 +19,7 @@ class CClientDlg : public CDialogEx
 public:
 	CClientDlg(CWnd* pParent = NULL);	// 标准构造函数
 	LRESULT On_Receive(WPARAM wp, LPARAM lp); // 接收串口的消息，并处理
+	void OnDiBang(int type); // 地磅数据处理函数
 
 // 对话框数据
 	enum { IDD = IDD_CLIENT_DIALOG };
@@ -59,27 +60,8 @@ public:
 		char SiBangYuan[32]; // 司磅员
 		char BaoAnYuan[32]; // 保安员
 		char ZhuangTai[16]; // 状态
+		char Type[16]; // 状态
 	}bill;
-
-	struct DAYIN{
-		CString m_title; // 标题
-		CString m_id; // 单号
-		CString m_CheHao; // 车号
-		CString m_CheXing; // 车型
-		CString m_DanWei; // 收货单位
-		CString m_DianHua; // 电话
-		CString m_HuoWu; // 货物名称
-		CString m_GuiGe; // 货物规格
-		CString m_PiZhong; // 皮重
-		CString m_MaoZhong; // 毛重
-		CString m_JingZhong; // 净重
-		CString m_DanJia; // 单价
-		CString m_DanJiaDanWei; // 单价单位
-		CString m_JinE; // 金额
-		CString m_BeiZhu; // 备注
-		CString m_User; // 司磅员
-	};
-	DAYIN DaYin;
 
 	int m_post_id; // 提交的编号，用于区分不同提交。
 	int m_isLogin; // 是否登陆
@@ -87,11 +69,12 @@ public:
 	unsigned char m_dibang_data[32]; // 地磅数据
 	int m_dibang_data_pos; // 地磅数据的位置
 	int m_Start; // 是否开始收集地磅数据
+	unsigned char str[1024];
 
 // 实现
 protected:
 	HICON m_hIcon;
-	_thread_com com1; // 创建串口1
+	CnComm Comm_; // 串口
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();

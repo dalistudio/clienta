@@ -113,6 +113,7 @@
   <ItemGroup>
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientDlg.h" />
+    <ClInclude Include="CnComm.h" />
     <ClInclude Include="com_class.h" />
     <ClInclude Include="PreviewPrintView.h" />
     <ClInclude Include="printer.h" />

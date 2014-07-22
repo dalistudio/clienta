@@ -167,6 +167,7 @@ BOOL CClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	Comm_.SetOption(Comm_.GetOption() | CnComm::EN_RX_BUFFER); // 设置串口使用读缓冲
 	memset(&bill,0,sizeof(BILL)); // 初始化单据
 
 	//
@@ -503,72 +504,80 @@ HCURSOR CClientDlg::OnQueryDragIcon()
 LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 {
 	// 这里接收地磅数据，并分析处理后修改相关控件的显示。
+
 	// 自动判断是新地磅还是旧地磅的数据
 	int len;
-	unsigned char str[8]={0};
-	len = com1.read((char *)str, 2);
 	int type = 0; // 用于判断新旧地磅的数据
+//	unsigned char str[1025]={0};
+	memset(str,0,1024);
+	len = Comm_.Read(str,1023); // 直接读串口
 
-	switch(str[0]) // 收到的第一个字符
+	for(int i=0;i<len;i++)
 	{
-	case 0x02: // 开始标志
-		// 开始搜集数据
-		if(m_Start==0)
+		switch(str[i]) // 收到的第一个字符
 		{
-			m_Start = 1;
-			m_dibang_data[m_dibang_data_pos] = str[0]; // 将字符赋值给地磅数据的全局变量
-			m_dibang_data_pos++; // 地磅数据位置+1
-		}
-		else
-		{
-			m_Start=0; // 防止出现多次0x02 而没有 0x0d结束
-		}
-		return 0; // 返回
+		case 0x02: // 开始标志
+			// 开始搜集数据
+			if(m_Start==0)
+			{
+				m_Start = 1;
+				memset(m_dibang_data,0,32); // 清空
+				m_dibang_data[m_dibang_data_pos] = str[i]; // 将字符赋值给地磅数据的全局变量
+				m_dibang_data_pos++; // 地磅数据位置+1
+			}
+			else
+			{
+				m_Start=0; // 防止出现多次0x02 而没有 0x0d结束
+			}
+			break;
 
-	case 0x03:
-		// 结束搜集数据
-		// 调用协议处理函数，分析数据。
-		type = 1; // 旧地磅
-		if(m_Start==1)
-		{
-			m_Start = 0;
-			m_dibang_data[m_dibang_data_pos] = str[0];
-			m_dibang_data[m_dibang_data_pos+1] = 0x00; // 无需再获取下一个字符了，直接在后面加上0x00结束字符串。
-			m_dibang_data_pos = 0; // 初始化地磅数据的位置为0，防止溢出。
-			break; // 中断switch继续执行，以便分析地磅数据。
-		}
-		else
-		{
-			return 0; // 返回
-		}
-	case 0x0D: // 结束标志
-		// 结束搜集数据
-		// 调用协议处理函数，分析数据。
-		type = 2; // 新地磅
-		if(m_Start==1)
-		{
-			m_Start = 0;
-			m_dibang_data[m_dibang_data_pos] = str[0];
-			m_dibang_data[m_dibang_data_pos+1] = 0x00; // 无需再获取下一个字符了，直接在后面加上0x00结束字符串。
-			m_dibang_data_pos = 0; // 初始化地磅数据的位置为0，防止溢出。
-			break; // 中断switch继续执行，以便分析地磅数据。
-		}
-		else
-		{
-			return 0; // 返回
-		}
+		case 0x03:
+			// 结束搜集数据
+			// 调用协议处理函数，分析数据。
+			type = 1; // 旧地磅
+			if(m_Start==1)
+			{
+				m_Start = 0;
+				m_dibang_data[m_dibang_data_pos] = str[i];
+				m_dibang_data[m_dibang_data_pos+1] = 0x00; // 无需再获取下一个字符了，直接在后面加上0x00结束字符串。
+				m_dibang_data_pos = 0; // 初始化地磅数据的位置为0，防止溢出。
+				OnDiBang(type); // 调用地磅处理函数
+			}
+			break;
+
+		case 0x0D: // 结束标志
+			// 结束搜集数据
+			// 调用协议处理函数，分析数据。
+			type = 2; // 新地磅
+			if(m_Start==1)
+			{
+				m_Start = 0;
+				m_dibang_data[m_dibang_data_pos] = str[i];
+				m_dibang_data[m_dibang_data_pos+1] = 0x00; // 无需再获取下一个字符了，直接在后面加上0x00结束字符串。
+				m_dibang_data_pos = 0; // 初始化地磅数据的位置为0，防止溢出。
+				OnDiBang(type); // 调用地磅处理函数
+			}
+			break;
+
 		
-	default:
-		if(m_Start==1)
-		{
-			m_dibang_data[m_dibang_data_pos] = str[0];
-			m_dibang_data_pos++;
+		default:
+			if(m_Start==1)
+			{
+				m_dibang_data[m_dibang_data_pos] = str[i];
+				m_dibang_data_pos++;
+			}
+			break;
 		}
-		return 0; // 返回
 	}
 
-	// 错误的地磅数据处理
-	if(type==0) return 0; // 如果没有符合地磅的数据直接返回
+	return 0;
+}
+
+// 地磅数据处理函数
+void CClientDlg::OnDiBang(int type)
+{
+		// 错误的地磅数据处理
+	if(type==0) return; // 如果没有符合地磅的数据直接返回
 	
 	// 旧地磅数据处理
 	if(type==1)
@@ -634,16 +643,12 @@ LRESULT CClientDlg::On_Receive(WPARAM wp, LPARAM lp)
 		}
 	}
 
-	
-
 //	printf("m_Weight = %s \n",m_Weight);
 
 	iWeight2 = atoi((char*)m_Weight); // 将字符型重量的值转换为数字型
 	CString strWeight;
 	strWeight.Format(_T("%d"),iWeight2);
 	m_zhongliang.SetWindowText(strWeight); // 实时显示重量
-
-	return 0;
 }
 
 // 计算金额
@@ -697,6 +702,7 @@ void CClientDlg::CalcJinE()
 	}
 }
 
+// 预览按钮
 void CClientDlg::OnBnClickedButtonCom1Send()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -785,15 +791,14 @@ BOOL CClientDlg::PreTranslateMessage(MSG* pMsg)
 void CClientDlg::OnBnClickedButtonComConn()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	// 初始化串口
-	if(!com1.open(conf.com1_id,conf.com1_para))
+	Comm_.SetWnd(this->m_hWnd); // 串口关联窗口
+	if (!Comm_.Open(conf.com1_id)) // 打开串口
 	{
 		m_com1.SetWindowText(_T("打开失败"));
 		MessageBox(L"串口打开失败", L"串口", MB_ICONHAND);
 	}
 	else
 	{
-		com1.set_hwnd(m_hWnd);
 		char tmp[64] = {0};
 		sprintf_s(tmp,"COM%d:%s",conf.com1_id,conf.com1_para);
 		USES_CONVERSION;
@@ -1019,35 +1024,6 @@ void CClientDlg::OnBnClickedButtonTijiao()
 void CClientDlg::OnBnClickedButtonDayin()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	// 将打印需要的数据先备份到DaYin结构中
-	USES_CONVERSION;
-	DaYin.m_title = conf.title;
-	m_id.GetWindowText(DaYin.m_id);
-	m_chehao.GetWindowText(DaYin.m_CheHao);
-	m_chexing.GetWindowText(DaYin.m_CheXing);
-	m_shouhuo.GetWindowText(DaYin.m_DanWei);
-	m_dianhua.GetWindowText(DaYin.m_DianHua);
-	m_huowu.GetWindowText(DaYin.m_HuoWu);
-	m_guige.GetWindowText(DaYin.m_GuiGe);
-	m_pizhong.GetWindowText(DaYin.m_PiZhong);
-	m_maozhong.GetWindowText(DaYin.m_MaoZhong);
-	m_jingzhong.GetWindowText(DaYin.m_JingZhong);
-	m_danjia.GetWindowText(DaYin.m_DanJia);
-	DaYin.m_DanJiaDanWei = A2W(bill.DanJiaDanWei);
-	m_jine.GetWindowText(DaYin.m_JinE);
-
-	// 备注
-	DaYin.m_BeiZhu = L"";
-	if(m_shoudong.GetCheck())
-	{
-		DaYin.m_BeiZhu += L"皮 ";
-	}
-	if(m_youhui.GetCheck())
-	{
-		DaYin.m_BeiZhu += L"惠 ";
-	}
-	m_user.GetWindowText(DaYin.m_User);
-
 	OnBnClickedButtonQuxiao(); // 调用“取消”按钮
 
 	// 执行打印
@@ -1149,50 +1125,24 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_printer->PreparePrinting();
 
 	USES_CONVERSION;
-	DaYin.m_title = conf.title;
-	m_id.GetWindowText(DaYin.m_id);
-	m_chehao.GetWindowText(DaYin.m_CheHao);
-	m_chexing.GetWindowText(DaYin.m_CheXing);
-	m_shouhuo.GetWindowText(DaYin.m_DanWei);
-	m_dianhua.GetWindowText(DaYin.m_DianHua);
-	m_huowu.GetWindowText(DaYin.m_HuoWu);
-	m_guige.GetWindowText(DaYin.m_GuiGe);
-	m_pizhong.GetWindowText(DaYin.m_PiZhong);
-	m_maozhong.GetWindowText(DaYin.m_MaoZhong);
-	m_jingzhong.GetWindowText(DaYin.m_JingZhong);
-	m_danjia.GetWindowText(DaYin.m_DanJia);
-	DaYin.m_DanJiaDanWei = A2W(bill.DanJiaDanWei);
-	m_jine.GetWindowText(DaYin.m_JinE);
-	// 备注
-	DaYin.m_BeiZhu = L"";
-	if(m_shoudong.GetCheck())
-	{
-		DaYin.m_BeiZhu += L"皮 ";
-	}
-	if(m_youhui.GetCheck())
-	{
-		DaYin.m_BeiZhu += L"惠 ";
-	}
-	m_user.GetWindowText(DaYin.m_User);
-
-	// 设置石场相关变量
-	m_printer->m_title = DaYin.m_title; // 标题
-	m_printer->m_id = DaYin.m_id;// 单号
-	m_printer->m_CheHao = DaYin.m_CheHao; // 车号
-	m_printer->m_CheXing = DaYin.m_CheXing; // 车型
-	m_printer->m_DanWei = DaYin.m_DanWei; // 收货单位
-	m_printer->m_DianHua = DaYin.m_DianHua; // 电话
-	m_printer->m_HuoWu = DaYin.m_HuoWu; // 货物名称
-	m_printer->m_GuiGe = DaYin.m_GuiGe; // 货物规格
-	m_printer->m_PiZhong = DaYin.m_PiZhong; // 皮重
-	m_printer->m_MaoZhong = DaYin.m_MaoZhong; // 毛重
-	m_printer->m_JingZhong = DaYin.m_JingZhong; // 净重
-	m_printer->m_DanJia = DaYin.m_DanJia; // 单价
-	m_printer->m_DanJiaDanWei = DaYin.m_DanJiaDanWei; // 单价单位
-	m_printer->m_JinE = DaYin.m_JinE; // 金额
-	m_printer->m_BeiZhu = DaYin.m_BeiZhu; // 备注
-	m_printer->m_User = DaYin.m_User; // 司磅员
-	m_printer->m_Times  = m_post_id; // 过磅次数
+	m_printer->m_title = A2W(conf.title); // 标题
+	m_printer->m_id = A2W(bill.DanHao); // 单号
+	m_printer->m_CheHao = (bill.CheHao); // 车号
+	m_printer->m_CheXing = A2W(bill.CheXing); // 车型
+	m_printer->m_DanWei = A2W(bill.DanWei); // 客户（单位）
+	m_printer->m_DianHua = A2W(bill.DianHua); // 电话
+	m_printer->m_HuoWu = A2W(bill.HuoWu); // 货物
+	m_printer->m_GuiGe = A2W(bill.GuiGe); // 规格
+	m_printer->m_PiZhong = A2W(bill.PiZhong); // 皮重
+	m_printer->m_MaoZhong = A2W(bill.MaoZhong); // 毛重
+	m_printer->m_JingZhong= A2W(bill.JingZhong); // 净重
+	m_printer->m_DanJia = A2W(bill.DanJia); // 单价
+	m_printer->m_DanJiaDanWei = A2W(bill.DanJiaDanWei); // 单价的单位
+	m_printer->m_JinE = A2W(bill.JinE); // 金额
+	m_printer->m_BeiZhu = A2W(bill.BeiZhu); // 备注
+	m_printer->m_User = A2W(bill.SiBangYuan); // 司磅员
+	m_printer->m_Times = m_post_id; // 提交次数
+	m_printer->m_Type = atoi(bill.Type); // 支付类型
 	
 	return TRUE;
 }
@@ -1234,39 +1184,42 @@ void CClientDlg::DoPrint()
 	{
 		CDC dc;
 		dc.Attach(dlg.m_pd.hDC);
-		std::tr1::shared_ptr<CPrinter> printer(new CPrinter(&dc));
-		printer->SetTotalLineNumber(10);//如果是列表控件的内容，告诉printer有多少行
-		printer->PreparePrinting();
+		std::tr1::shared_ptr<CPrinter> m_printer(new CPrinter(&dc));
+		m_printer->SetTotalLineNumber(10);//如果是列表控件的内容，告诉printer有多少行
+		m_printer->PreparePrinting();
 
 		// 设置石场相关变量
-		printer->m_title = DaYin.m_title; // 标题
-		printer->m_id = DaYin.m_id;// 单号
-		printer->m_CheHao = DaYin.m_CheHao; // 车号
-		printer->m_CheXing = DaYin.m_CheXing; // 车型
-		printer->m_DanWei = DaYin.m_DanWei; // 收货单位
-		printer->m_DianHua = DaYin.m_DianHua; // 电话
-		printer->m_HuoWu = DaYin.m_HuoWu; // 货物名称
-		printer->m_GuiGe = DaYin.m_GuiGe; // 货物规格
-		printer->m_PiZhong = DaYin.m_PiZhong; // 皮重
-		printer->m_MaoZhong = DaYin.m_MaoZhong; // 毛重
-		printer->m_JingZhong = DaYin.m_JingZhong; // 净重
-		printer->m_DanJia = DaYin.m_DanJia; // 单价
-		printer->m_DanJiaDanWei = DaYin.m_DanJiaDanWei; // 单价单位
-		printer->m_JinE = DaYin.m_JinE; // 金额
-		printer->m_BeiZhu = DaYin.m_BeiZhu; // 备注
-		printer->m_User = DaYin.m_User; // 司磅员
+		USES_CONVERSION;
+		m_printer->m_title = A2W(conf.title); // 标题
+		m_printer->m_id = A2W(bill.DanHao); // 单号
+		m_printer->m_CheHao = (bill.CheHao); // 车号
+		m_printer->m_CheXing = A2W(bill.CheXing); // 车型
+		m_printer->m_DanWei = A2W(bill.DanWei); // 客户（单位）
+		m_printer->m_DianHua = A2W(bill.DianHua); // 电话
+		m_printer->m_HuoWu = A2W(bill.HuoWu); // 货物
+		m_printer->m_GuiGe = A2W(bill.GuiGe); // 规格
+		m_printer->m_PiZhong = A2W(bill.PiZhong); // 皮重
+		m_printer->m_MaoZhong = A2W(bill.MaoZhong); // 毛重
+		m_printer->m_JingZhong= A2W(bill.JingZhong); // 净重
+		m_printer->m_DanJia = A2W(bill.DanJia); // 单价
+		m_printer->m_DanJiaDanWei = A2W(bill.DanJiaDanWei); // 单价的单位
+		m_printer->m_JinE = A2W(bill.JinE); // 金额
+		m_printer->m_BeiZhu = A2W(bill.BeiZhu); // 备注
+		m_printer->m_User = A2W(bill.SiBangYuan); // 司磅员
+		m_printer->m_Times = m_post_id; // 提交次数
+		m_printer->m_Type = atoi(bill.Type); // 支付类型
 
-		if(printer->StartPrinting()) // 开始打印
+		if(m_printer->StartPrinting()) // 开始打印
 		{
-			while ( printer->NeedStartNewPage() )
+			while ( m_printer->NeedStartNewPage() )
 			{
-				printer->StartPage();
+				m_printer->StartPage();
 				//打印内容，自己分页
-				printer->PrintHeader();
-				printer->PrintBody();
-				printer->EndPage();
+				m_printer->PrintHeader();
+				m_printer->PrintBody();
+				m_printer->EndPage();
 			}
-			printer->EndPrinting();
+			m_printer->EndPrinting();
 		}
 		::DeleteDC(dc.Detach());
 	}
@@ -1696,14 +1649,14 @@ size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 			strcpy_s(client->bill.MiDu,cJSON_GetObjectItem(jsonroot,"md")->valuestring); // 密度
 			strcpy_s(client->bill.JinE,cJSON_GetObjectItem(jsonroot,"je")->valuestring); // 金额
 			strcpy_s(client->bill.YuE,cJSON_GetObjectItem(jsonroot,"ye")->valuestring); // 余额
-			strcpy_s(client->bill.BeiZhu,UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"yh")->valuestring)); // 货物 // 备注，需要改php
+			strcpy_s(client->bill.BeiZhu,UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"bz")->valuestring)); // 货物 // 备注，需要改php
 			strcpy_s(client->bill.GuoBang1,cJSON_GetObjectItem(jsonroot,"gb1")->valuestring); // 过磅1时间
 			strcpy_s(client->bill.GuoBang2,cJSON_GetObjectItem(jsonroot,"gb2")->valuestring); // 过磅2时间
 			strcpy_s(client->bill.ChuChang,cJSON_GetObjectItem(jsonroot,"cc")->valuestring); // 出场时间
 			strcpy_s(client->bill.SiBangYuan,UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"sby")->valuestring)); // 司磅员
 			strcpy_s(client->bill.BaoAnYuan,UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"bay")->valuestring)); // 保安员
 			strcpy_s(client->bill.ZhuangTai,cJSON_GetObjectItem(jsonroot,"zt")->valuestring); // 状态
-
+			strcpy_s(client->bill.Type,cJSON_GetObjectItem(jsonroot,"type")->valuestring); // 支付类型
 
 			client->m_id.EnableWindow(FALSE); // 禁止“单号”对话框
 			client->m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
@@ -1952,6 +1905,7 @@ void CClientDlg::OnBnClickedButtonGaidan()
 	m_huowu.EnableWindow(TRUE); // 启用货物
 	m_guige.EnableWindow(TRUE); // 启用规格
 	m_shouhuo.EnableWindow(TRUE); // 启用单位
+	m_dayin.EnableWindow(FALSE); // 禁用打印按钮
 
 	m_danjia.SetWindowText(L""); // 设置单价为空
 }
