@@ -220,9 +220,9 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(80,207+120,CString("货物"));
 		m_dc->TextOut(395,207+120,m_HuoWu);
 
-		m_dc->TextOut(730,207+120,CString("单价"));
 		if(m_Type==0) // 只有零售才打印单价
 		{
+			m_dc->TextOut(730,207+120,CString("单价"));
 			if(m_DanJia.IsEmpty() || m_DanJia==L"0")
 			{
 				m_DanJia =L"";
@@ -239,15 +239,18 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(80,207+160,CString("规格"));
 		m_dc->TextOut(395,207+160,m_GuiGe);
 
-		m_dc->TextOut(730,207+160,CString("金额"));
-		if(m_JinE.IsEmpty() || m_JinE==L"0")
+		if(m_Type==0) // 只有零售才打印金额
 		{
-			m_JinE =L"";
-			m_dc->TextOut(1065,207+160,m_JinE);
-		}
-		else
-		{
-			m_dc->TextOut(1065,207+160,m_JinE+L" 元");
+			m_dc->TextOut(730,207+160,CString("金额"));
+			if(m_JinE.IsEmpty() || m_JinE==L"0")
+			{
+				m_JinE =L"";
+				m_dc->TextOut(1065,207+160,m_JinE);
+			}
+			else
+			{
+				m_dc->TextOut(1065,207+160,m_JinE+L" 元");
+			}
 		}
 		
 

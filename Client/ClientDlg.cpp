@@ -662,7 +662,7 @@ void CClientDlg::CalcJinE()
 	// 获得单价
 	CString DanJia;
 	m_danjia.GetWindowText(DanJia); // 获得单价
-	int iDanJia = _ttoi(DanJia); // 转换类型
+	float iDanJia = _ttof(DanJia); // 转换类型
 
 	// 计算吨数 和 金额
 	float iDun =0;
@@ -683,21 +683,27 @@ void CClientDlg::CalcJinE()
 		GetDlgItem(IDC_STATIC_Dun)->SetWindowText(L"元/吨");
 	}
 
+	CString JinE;
 	if(iJinE > 0)
 	{
-		// 四舍五入个位数到十位数
-		int a = 0;
-		int b = 0;
-		a = (int)iJinE; // 强制浮点转整数，舍去小数部分，非四舍五入
-		b=a%10;//求余数,得到最后一位  
-		if (b>=5) // 五入
-			a=(a/10+1)*10; // 十位加一,乘于十倍
-		else // 四舍
-			a=(a/10)*10; // 舍去个位,乘于十倍
-		/////////////////////////////
-
-		CString JinE;
-		JinE.Format(_T("%d"),a);
+		if(bill.Type==0) // 零售
+		{
+			// 四舍五入个位数到十位数
+			int a = 0;
+			int b = 0;
+			a = (int)iJinE; // 强制浮点转整数，舍去小数部分，非四舍五入
+			b=a%10;//求余数,得到最后一位  
+			if (b>=5) // 五入
+				a=(a/10+1)*10; // 十位加一,乘于十倍
+			else // 四舍
+				a=(a/10)*10; // 舍去个位,乘于十倍
+			/////////////////////////////
+			JinE.Format(_T("%d"),a);
+		}
+		else // 预付款或月售
+		{
+			JinE.Format(_T("%.2f"),iJinE); // 保留小数点后两位
+		}
 		m_jine.SetWindowText(JinE); // 设置金额
 	}
 }
@@ -791,8 +797,10 @@ BOOL CClientDlg::PreTranslateMessage(MSG* pMsg)
 void CClientDlg::OnBnClickedButtonComConn()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	USES_CONVERSION;
+
 	Comm_.SetWnd(this->m_hWnd); // 串口关联窗口
-	if (!Comm_.Open(conf.com1_id)) // 打开串口
+	if (!Comm_.Open(conf.com1_id,A2W(conf.com1_para))) // 打开串口
 	{
 		m_com1.SetWindowText(_T("打开失败"));
 		MessageBox(L"串口打开失败", L"串口", MB_ICONHAND);
@@ -947,7 +955,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	m_chehao.GetWindowText(strCheHao); // 车号
 	m_chexing.GetWindowText(strCheXing); // 车型
 	m_shouhuo.GetWindowText(strDanWei); // 单位
-//	m_dianhua.GetWindowText(strDianHua); // 电话
+	m_dianhua.GetWindowText(strDianHua); // 电话
 	m_huowu.GetWindowText(strHuoWu); // 货物
 	m_guige.GetWindowText(strGuiGe); // 规格
 	m_pizhong.GetWindowText(strPiZhong); // 皮重
@@ -957,7 +965,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	m_jine.GetWindowText(strJinE); // 金额
 	m_user.GetWindowText(strUser); // 操作员
 	
-	strBeiZhu = L"";
+	strBeiZhu.Format(L"%s",A2W(bill.BeiZhu));
 	if(m_shoudong.GetCheck())
 	{
 		strBeiZhu += L"皮 ";
@@ -966,6 +974,22 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	{
 		strBeiZhu += L"惠 ";
 	}
+
+	// 设置 bill 结构
+	strcpy(bill.DanHao,W2A(strDanHao)); // 单号
+	strcpy(bill.CheHao,W2A(strCheHao)); // 车号
+	strcpy(bill.CheXing,W2A(strCheXing)); // 车型
+	strcpy(bill.DanWei,W2A(strDanWei)); // 收货单位
+	strcpy(bill.DianHua,W2A(strDianHua)); // 电话
+	strcpy(bill.HuoWu,W2A(strHuoWu)); // 货物名称
+	strcpy(bill.GuiGe,W2A(strGuiGe)); // 货物规格
+	strcpy(bill.PiZhong,W2A(strPiZhong)); // 皮重
+	strcpy(bill.MaoZhong,W2A(strMaoZhong)); // 毛重
+	strcpy(bill.JingZhong,W2A(strJingZhong)); // 净重
+	strcpy(bill.DanJia,W2A(strDanJia)); // 单价
+	strcpy(bill.JinE,W2A(strJinE)); // 金额
+	strcpy(bill.BeiZhu,W2A(strBeiZhu)); // 备注
+	strcpy(bill.SiBangYuan,W2A(strUser)); // 司磅员
 
 	// 如果毛重为空，表示第一次提交
 	if(m_post_id==1 || m_post_id==3)
@@ -1208,6 +1232,7 @@ void CClientDlg::DoPrint()
 		m_printer->m_User = A2W(bill.SiBangYuan); // 司磅员
 		m_printer->m_Times = m_post_id; // 提交次数
 		m_printer->m_Type = atoi(bill.Type); // 支付类型
+		memset(&bill,0,sizeof(BILL));
 
 		if(m_printer->StartPrinting()) // 开始打印
 		{
@@ -1485,6 +1510,7 @@ void CClientDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 void CClientDlg::OnBnClickedButtonQuxiao()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	memset(&bill,0,sizeof(BILL)); // 清空 bill 结构
 	m_chehao.EnableWindow(FALSE); // 禁用“车号”输入框
 	m_chexing.EnableWindow(FALSE); // 禁用“车型”输入框
 	m_shouhuo.EnableWindow(FALSE); // 禁用“单位”输入框
@@ -1840,7 +1866,7 @@ void CClientDlg::OnCheLiang()
 		}
 		else
 		{
-			MessageBox(L"下载超时！！！",L"下载报表",MB_ICONHAND);
+			MessageBox(L"获得在场车辆超时！！！",L"下载报表",MB_ICONHAND);
 		}
 	}
 }

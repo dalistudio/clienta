@@ -60,7 +60,7 @@ public:
 		char SiBangYuan[32]; // 司磅员
 		char BaoAnYuan[32]; // 保安员
 		char ZhuangTai[16]; // 状态
-		char Type[16]; // 状态
+		char Type[16]; // 支付类型
 	}bill;
 
 	int m_post_id; // 提交的编号，用于区分不同提交。
@@ -69,7 +69,7 @@ public:
 	unsigned char m_dibang_data[32]; // 地磅数据
 	int m_dibang_data_pos; // 地磅数据的位置
 	int m_Start; // 是否开始收集地磅数据
-	unsigned char str[1024];
+	unsigned char str[1024]; // 串口接收缓冲
 
 // 实现
 protected:

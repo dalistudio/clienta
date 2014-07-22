@@ -6,7 +6,7 @@
     },
     "com": {
         "port":2,
-        "para":"baud=9600 parity=N data=8 stop=1"
+        "para":"9600,N,8,1"
     },
     "path":"d:\\"
 }
