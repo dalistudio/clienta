@@ -105,7 +105,7 @@ public:
 	CEdit m_id; // 单号
 	CEdit m_chehao; // 车号
 	CEdit m_dianhua; // 电话
-	CComboBox m_shouhuo; // 收货
+	CComboBox m_danwei; // 单位
 	CEdit m_pizhong; // 皮重
 	CEdit m_maozhong; // 毛重
 	CEdit m_jingzhong; // 净重

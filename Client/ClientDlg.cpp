@@ -83,7 +83,7 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_DANHAO, m_id); // 单号
 	DDX_Control(pDX, IDC_EDIT_CHEHAO, m_chehao); // 车号
 	DDX_Control(pDX, IDC_EDIT_DIANHUA, m_dianhua); // 电话
-	DDX_Control(pDX, IDC_EDIT_SHOUHUO, m_shouhuo); // 单位
+	DDX_Control(pDX, IDC_EDIT_DANWEI, m_danwei); // 单位
 	DDX_Control(pDX, IDC_EDIT_PIZHONG, m_pizhong); // 皮重
 	DDX_Control(pDX, IDC_EDIT_MAOZHONG, m_maozhong); // 毛重
 	DDX_Control(pDX, IDC_EDIT_JINGZHONG, m_jingzhong); // 净重
@@ -212,7 +212,7 @@ BOOL CClientDlg::OnInitDialog()
 	strcpy_s(conf.ip,"192.168.1.5");
 	conf.port = 80;
 	conf.com1_id=1;
-	strcpy_s(conf.com1_para,"baud=9600 parity=N data=8 stop=1");
+	strcpy_s(conf.com1_para,"9600,N,8,1");
 
 	// 打开配置文件 JSON 格式
 	FILE *f;
@@ -357,8 +357,8 @@ BOOL CClientDlg::OnInitDialog()
 	GetDlgItem(IDC_COMBO_GUIGE)->SetFont(m_Font);
 
 	// 收货单位
-	GetDlgItem(IDC_STATIC_SHOUHUO)->SetFont(m_Font);
-	GetDlgItem(IDC_EDIT_SHOUHUO)->SetFont(m_Font);
+	GetDlgItem(IDC_STATIC_DANWEI)->SetFont(m_Font);
+	GetDlgItem(IDC_EDIT_DANWEI)->SetFont(m_Font);
 
 	// 余额
 	GetDlgItem(IDC_STATIC_YUE)->SetFont(m_Font);
@@ -954,7 +954,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	m_id.GetWindowText(strDanHao); // 单号
 	m_chehao.GetWindowText(strCheHao); // 车号
 	m_chexing.GetWindowText(strCheXing); // 车型
-	m_shouhuo.GetWindowText(strDanWei); // 单位
+	m_danwei.GetWindowText(strDanWei); // 单位
 	m_dianhua.GetWindowText(strDianHua); // 电话
 	m_huowu.GetWindowText(strHuoWu); // 货物
 	m_guige.GetWindowText(strGuiGe); // 规格
@@ -1104,7 +1104,7 @@ void CClientDlg::OnBnClickedButtonGet()
 			m_chexing.EnableWindow(FALSE); // 禁用车型
 			m_huowu.EnableWindow(FALSE); // 禁用货物
 			m_guige.EnableWindow(FALSE); // 禁用规格
-			m_shouhuo.EnableWindow(FALSE); // 禁用单位
+			m_danwei.EnableWindow(FALSE); // 禁用单位
 
 			m_gaidan.EnableWindow(TRUE); // 启用改单按钮
 		}
@@ -1115,7 +1115,7 @@ void CClientDlg::OnBnClickedButtonGet()
 			m_chexing.EnableWindow(FALSE); // 禁用车型
 			m_huowu.EnableWindow(FALSE); // 禁用货物
 			m_guige.EnableWindow(FALSE); // 禁用规格
-			m_shouhuo.EnableWindow(FALSE); // 禁用单位
+			m_danwei.EnableWindow(FALSE); // 禁用单位
 
 			m_tijiao.EnableWindow(FALSE); // 禁用提交按钮
 			m_gaidan.EnableWindow(FALSE); // 禁用改单按钮
@@ -1324,10 +1324,11 @@ void CClientDlg::OnBnClickedButtonJiaojie()
 	strcat_s(url,"http://");
 	strcat_s(url,conf.ip);
 	strcat_s(url,"/");
-	strcat_s(url,"Report_JiaoJie.php");
+	strcat_s(url,"Report_Excel.php");
 
 	char data[1024]={0};
-	sprintf_s(data,"user=%s&",W2A(strUser)); // 用户
+	sprintf_s(data,"SiBangYuan=%s&",W2A(strUser)); // 司磅员
+	sprintf_s(data,"%sType=0&",data); // 支付类型为零售
 	sprintf_s(data,"%sstart=%s&",data,W2A(strStart)); // 开始
 	sprintf_s(data,"%send=%s",data,W2A(strEnd)); // 结束
 
@@ -1513,7 +1514,7 @@ void CClientDlg::OnBnClickedButtonQuxiao()
 	memset(&bill,0,sizeof(BILL)); // 清空 bill 结构
 	m_chehao.EnableWindow(FALSE); // 禁用“车号”输入框
 	m_chexing.EnableWindow(FALSE); // 禁用“车型”输入框
-	m_shouhuo.EnableWindow(FALSE); // 禁用“单位”输入框
+	m_danwei.EnableWindow(FALSE); // 禁用“单位”输入框
 	m_huowu.EnableWindow(FALSE); // 禁用“货物”输入框
 	m_guige.EnableWindow(FALSE); // 禁用“规格”输入框
 	m_pizhong.EnableWindow(FALSE); // 禁用“皮重”输入框
@@ -1532,7 +1533,7 @@ void CClientDlg::OnBnClickedButtonQuxiao()
 	m_id.SetWindowText(_T("")); // 单号
 	m_chehao.SetWindowText(_T("")); // 车号
 	m_dianhua.SetWindowText(_T("")); // 电话
-	m_shouhuo.SetCurSel(0); // 收货单位
+	m_danwei.SetCurSel(0); // 收货单位
 	m_huowu.SetCurSel(0); // 货物名称
 	m_guige.SetCurSel(0); // 货物规格
 	m_pizhong.SetWindowText(_T("")); // 皮重
@@ -1610,9 +1611,9 @@ size_t CClientDlg::login_data(void *ptr, size_t size, size_t nmemb, void *userp)
 		{
 			cJSON* node;
 			node = cJSON_GetArrayItem(member,i);
-			client->m_shouhuo.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加会员名称到单位控件下
+			client->m_danwei.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加会员名称到单位控件下
 		}
-		client->m_shouhuo.SetCurSel(0);
+		client->m_danwei.SetCurSel(0);
 	}
 	cJSON_Delete(jsonroot);
 
@@ -1645,7 +1646,7 @@ size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 			client->m_id.EnableWindow(FALSE); // 禁止“单号”输入框
 			client->m_chehao.EnableWindow(TRUE); // 开启“车号”输入框
 			client->m_chexing.EnableWindow(TRUE); // 开启“车型”输入框
-			client->m_shouhuo.EnableWindow(TRUE); // 开启“收获”输入框
+			client->m_danwei.EnableWindow(TRUE); // 开启“收获”输入框
 			client->m_huowu.EnableWindow(TRUE); // 开启“货物”输入框
 			client->m_guige.EnableWindow(TRUE); // 开启“规格”输入框
 			client->m_tijiao.EnableWindow(TRUE); // 启用“提交”按钮
@@ -1791,7 +1792,7 @@ size_t CClientDlg::chehao_data(void *ptr, size_t size, size_t nmemb, void *userp
 			client->m_chexing.SetWindowText(A2CW(UTF8ToEncode(node->valuestring))); // 车型
 
 			node = cJSON_GetArrayItem(jsonroot,2);
-			client->m_shouhuo.SetWindowText(A2CW(UTF8ToEncode(node->valuestring))); // 单位
+			client->m_danwei.SetWindowText(A2CW(UTF8ToEncode(node->valuestring))); // 单位
 
 			node = cJSON_GetArrayItem(jsonroot,3);
 			client->m_huowu.SetWindowText(A2CW(UTF8ToEncode(node->valuestring))); // 货物
@@ -1878,7 +1879,7 @@ void CClientDlg::ShowBill()
 	m_chehao.SetWindowText(A2CW(bill.CheHao)); // 车号
 	m_chexing.SetWindowText(A2CW(bill.CheXing)); // 车型
 	m_dianhua.SetWindowText(A2CW(bill.DianHua)); // 电话
-	m_shouhuo.SetWindowText(A2CW(bill.DanWei)); // 单位
+	m_danwei.SetWindowText(A2CW(bill.DanWei)); // 单位
 	m_huowu.SetWindowText(A2CW(bill.HuoWu)); // 货物
 	m_guige.SetWindowText(A2CW(bill.GuiGe)); // 规格
 	m_pizhong.SetWindowText(A2CW(bill.PiZhong)); // 皮重
@@ -1912,9 +1913,9 @@ HBRUSH CClientDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	// TODO:  在此更改 DC 的任何特性
 	if (GetDlgItem(IDC_EDIT_ZHONGLIANG) == pWnd) // 重量文本框控件
 	{
-		static HBRUSH   hbrEdit = ::CreateSolidBrush( RGB(255,255,128) ); // 背景颜色
+		static HBRUSH   hbrEdit = ::CreateSolidBrush( RGB(255,255,128) ); // （黄）背景颜色
 		pDC->SetBkMode( TRANSPARENT ); 
-		pDC->SetTextColor( RGB(255,0,0));// 字体颜色
+		pDC->SetTextColor( RGB(255,0,0));// （红）字体颜色
 		return hbrEdit;
      }
 	// TODO:  如果默认的不是所需画笔，则返回另一个画笔
@@ -1930,7 +1931,7 @@ void CClientDlg::OnBnClickedButtonGaidan()
 	m_chexing.EnableWindow(TRUE); // 启用车型
 	m_huowu.EnableWindow(TRUE); // 启用货物
 	m_guige.EnableWindow(TRUE); // 启用规格
-	m_shouhuo.EnableWindow(TRUE); // 启用单位
+	m_danwei.EnableWindow(TRUE); // 启用单位
 	m_dayin.EnableWindow(FALSE); // 禁用打印按钮
 
 	m_danjia.SetWindowText(L""); // 设置单价为空
