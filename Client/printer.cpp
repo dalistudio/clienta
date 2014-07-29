@@ -129,16 +129,14 @@ void CPrinter::PrintBody()
 		CString strDateTime;
 		GetLocalTime(&st);
 
-		strDateTime.Format(L"打印时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
+		strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
 		m_dc->TextOut(60,150,strDateTime);
 
-		//strDateTime.Format(L"单号：%4d%02d%02d %s",st.wYear,st.wMonth,st.wDay,m_id); // 单号
-		strDateTime.Format(L"单号：%s",m_id); // 单号
-		m_dc->TextOut(600,150,strDateTime); // 单号
-
 		strDateTime.Format(L"电话：%s",m_DianHua);
-		m_dc->TextOut(1000,150,strDateTime); // 电话
-		
+		m_dc->TextOut(500,150,strDateTime); // 电话
+
+		strDateTime.Format(L"单号：%s",m_id); // 单号
+		m_dc->TextOut(800,150,strDateTime); // 单号
 
 		// 画表格
 		CPen  bi,*jbi;
@@ -284,11 +282,13 @@ void CPrinter::PrintBody()
 		symbol = ZBarcode_Create();  
 		if (symbol != NULL)  
 		{  
-			symbol->height = 20;
+//			symbol->height = 20;
 			symbol->scale = 2;  
-            //symbol->option_1 = 1; //容错级别  
-            //symbol->option_2 = 1; //版本，决定图片大小  
-			symbol->symbology = 20;//BARCODE_QRCODE;  // 条码类型
+
+            symbol->option_1 = 2; // QR容错级别  
+            symbol->option_2 = 2; // QR版本，决定图片大小  
+			symbol->symbology = 58;// QR条码类型
+//			symbol->symbology = 20;// 条码类型
 
 			symbol->show_hrt = 1; //可显示信息，如果设置为1，则需要设置text值  
 			symbol->input_mode = UNICODE_MODE;  
@@ -308,28 +308,10 @@ void CPrinter::PrintBody()
 			bmih.biYPelsPerMeter         = 0 ;
 			bmih.biClrUsed               = 0 ;
 			bmih.biClrImportant          = 0 ;
-			//SetDIBitsToDevice(m_dc->m_hDC, 800, 30, 400, 100, 0, 0,400, 100, symbol->bitmap, (BITMAPINFO*)&bmih, DIB_RGB_COLORS);
-			StretchDIBits(m_dc->m_hDC,900,20,450,symbol->bitmap_height,0,0,symbol->bitmap_width,symbol->bitmap_height,symbol->bitmap,(BITMAPINFO*)&bmih,DIB_RGB_COLORS,SRCCOPY);
 
-			/*
-			//HBITMAP hBitmap = (HBITMAP)LoadImage(NULL, _T("d:\\1.bmp"), IMAGE_BITMAP,0, 0, LR_CREATEDIBSECTION |LR_DEFAULTSIZE | LR_LOADFROMFILE);
-			HBITMAP hBitmap = CreateDIBSection (NULL, (BITMAPINFO *)  &bmih, 0, (void**)symbol->bitmap, NULL, 0) ;
+//			StretchDIBits(m_dc->m_hDC,900,20,450,symbol->bitmap_height,0,0,symbol->bitmap_width,symbol->bitmap_height,symbol->bitmap,(BITMAPINFO*)&bmih,DIB_RGB_COLORS,SRCCOPY); // 一维条形码
+			StretchDIBits(m_dc->m_hDC,1100,40,150,150,0,0,symbol->bitmap_width,symbol->bitmap_height,symbol->bitmap,(BITMAPINFO*)&bmih,DIB_RGB_COLORS,SRCCOPY); // 二维码
 
-			BITMAP bitmap;
-			::GetObject(hBitmap,sizeof(BITMAP),&bitmap);
-        
-			HDC dcMem;
-			dcMem=::CreateCompatibleDC(m_dc->m_hDC);
-			HBITMAP hOldBmp=(HBITMAP)::SelectObject(dcMem,hBitmap);     
- 
-			/// 复制位图到矩阵     PosY PosX 宽  高
-			::StretchBlt(m_dc->m_hDC,900,30,400,100,dcMem,0,0,bitmap.bmWidth,bitmap.bmHeight,SRCCOPY);
-		    ::SelectObject(dcMem,hOldBmp);
-
-			// 清理
-			::DeleteDC(dcMem);
-			::DeleteObject(hBitmap);
-			*/
 			ZBarcode_Delete(symbol);  
 		}
 		

@@ -686,7 +686,7 @@ void CClientDlg::CalcJinE()
 	CString JinE;
 	if(iJinE > 0)
 	{
-		if(bill.Type==0) // 零售
+		if(strcmp(bill.Type,"0")==0) // 零售
 		{
 			// 四舍五入个位数到十位数
 			int a = 0;
@@ -1048,10 +1048,10 @@ void CClientDlg::OnBnClickedButtonTijiao()
 void CClientDlg::OnBnClickedButtonDayin()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	OnBnClickedButtonQuxiao(); // 调用“取消”按钮
-
 	// 执行打印
 	DoPrint(); // 打印核心调用
+
+	OnBnClickedButtonQuxiao(); // 调用“取消”按钮
 }
 
 // 获取单据信息
