@@ -1605,6 +1605,7 @@ size_t CClientDlg::login_data(void *ptr, size_t size, size_t nmemb, void *userp)
 		client->m_huowu.SetCurSel(0); // 货物名称选择第一个项		
 				
 		// 获取客户名称
+		client->m_danwei.ResetContent(); // 清空客户控件中的所有项
 		cJSON *member = cJSON_GetObjectItem(jsonroot,"member");
 		int size = cJSON_GetArraySize(member); // 获得数组的长度
 		for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
