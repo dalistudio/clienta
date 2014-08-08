@@ -78,6 +78,7 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_IP, m_ip); // IP地址
 	DDX_Control(pDX, IDC_EDIT_PORT, m_port); // 端口
 	DDX_Control(pDX, IDC_EDIT_COM1, m_com1); // 串口
+	DDX_Control(pDX, IDC_COMBO_TYPE, m_type); // 客户类型
 	DDX_Control(pDX, IDC_EDIT_USER, m_user); // 用户
 	DDX_Control(pDX, IDC_EDIT_PWD, m_pwd); // 密码
 	DDX_Control(pDX, IDC_EDIT_DANHAO, m_id); // 单号
@@ -419,9 +420,17 @@ BOOL CClientDlg::OnInitDialog()
 
 	/////////////////////////////////
 
+	// 车型
 	m_chexing.AddString(_T("大车"));
 	m_chexing.AddString(_T("小车"));
 	m_chexing.SetCurSel(0); // 选择第一项“大车”
+
+	// 客户类型
+	m_type.AddString(_T("全部"));
+	m_type.AddString(_T("零售"));
+	m_type.AddString(_T("预付款"));
+	m_type.AddString(_T("月结"));
+	m_type.SetCurSel(1);
 
 	///////////////////////////////
 	// 车辆信息列表设置
@@ -442,9 +451,9 @@ BOOL CClientDlg::OnInitDialog()
 	m_list.InsertColumn(3,L"货物",LVCFMT_CENTER,80);
 	m_list.InsertColumn(4,L"规格",LVCFMT_CENTER,80);
 	m_list.InsertColumn(5,L"电话",LVCFMT_CENTER,100);
-	m_list.InsertColumn(6,L"客户",LVCFMT_CENTER,200);
+	m_list.InsertColumn(6,L"客户",LVCFMT_CENTER,250);
 	m_list.InsertColumn(7,L"皮重",LVCFMT_RIGHT,100);
-	m_list.InsertColumn(8,L"第1次过磅时间",LVCFMT_CENTER,160);
+	m_list.InsertColumn(8,L"第1次过磅时间",LVCFMT_CENTER,180);
 	m_list.InsertColumn(9,L"过磅次数",LVCFMT_CENTER,80);
 	
 	//return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -1279,6 +1288,14 @@ void CClientDlg::OnBnClickedButtonJiaojie()
 	// TODO: 在此添加控件通知处理程序代码
 	USES_CONVERSION;
 
+	CString strType;
+	int iType=0;
+	m_type.GetWindowText(strType);
+	if(strType.Compare(L"全部")==0) iType=-1;
+	if(strType.Compare(L"零售")==0) iType=0;
+	if(strType.Compare(L"预付款")==0) iType=1;
+	if(strType.Compare(L"月结")==0) iType=2;
+
 	CString strStart,strEnd,strUser;
 	m_Date_Start.GetWindowText(strStart); // 获得开始时间
 	m_Date_End.GetWindowText(strEnd); // 获得结束时间
@@ -1315,7 +1332,7 @@ void CClientDlg::OnBnClickedButtonJiaojie()
 	strEndTime.Format(_T("%04d%02d%02d%02d"),End_Time.GetYear(),End_Time.GetMonth(),End_Time.GetDay(),End_Time.GetHour());
 
 	CString strFileName;
-	strFileName.Format(L"%s\\report_%s_%s-%s.xls",strPath,strUser,strStartTime,strEndTime);
+	strFileName.Format(L"%s\\report_%s_%s-%s_%s.xls",strPath,strUser,strStartTime,strEndTime,strType);
 
 	FILE *fp;
 	fopen_s(&fp,W2A(strFileName),"wb"); // 保存文件及位置
@@ -1328,7 +1345,7 @@ void CClientDlg::OnBnClickedButtonJiaojie()
 
 	char data[1024]={0};
 	sprintf_s(data,"SiBangYuan=%s&",W2A(strUser)); // 司磅员
-	sprintf_s(data,"%sType=0&",data); // 支付类型为零售
+	if(iType!=-1) sprintf_s(data,"%sType=%d&",data, iType); // 支付类型为零售
 	sprintf_s(data,"%sstart=%s&",data,W2A(strStart)); // 开始
 	sprintf_s(data,"%send=%s",data,W2A(strEnd)); // 结束
 
@@ -1868,7 +1885,7 @@ void CClientDlg::OnCheLiang()
 		}
 		else
 		{
-			MessageBox(L"获得在场车辆超时！！！",L"下载报表",MB_ICONHAND);
+//			MessageBox(L"获得在场车辆超时！！！",L"在场车辆",MB_ICONHAND);
 		}
 	}
 }

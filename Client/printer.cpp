@@ -285,7 +285,7 @@ void CPrinter::PrintBody()
 //			symbol->height = 20;
 			symbol->scale = 2;  
 
-            symbol->option_1 = 2; // QR容错级别  
+            symbol->option_1 = 1; // QR容错级别  
             symbol->option_2 = 2; // QR版本，决定图片大小  
 			symbol->symbology = 58;// QR条码类型
 //			symbol->symbology = 20;// 条码类型
@@ -310,7 +310,7 @@ void CPrinter::PrintBody()
 			bmih.biClrImportant          = 0 ;
 
 //			StretchDIBits(m_dc->m_hDC,900,20,450,symbol->bitmap_height,0,0,symbol->bitmap_width,symbol->bitmap_height,symbol->bitmap,(BITMAPINFO*)&bmih,DIB_RGB_COLORS,SRCCOPY); // 一维条形码
-			StretchDIBits(m_dc->m_hDC,1100,40,150,150,0,0,symbol->bitmap_width,symbol->bitmap_height,symbol->bitmap,(BITMAPINFO*)&bmih,DIB_RGB_COLORS,SRCCOPY); // 二维码
+			StretchDIBits(m_dc->m_hDC,1100,70,120,120,0,0,symbol->bitmap_width,symbol->bitmap_height,symbol->bitmap,(BITMAPINFO*)&bmih,DIB_RGB_COLORS,SRCCOPY); // 二维码
 
 			ZBarcode_Delete(symbol);  
 		}

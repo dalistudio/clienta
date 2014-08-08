@@ -99,6 +99,7 @@ public:
 	CEdit m_ip; // IP地址
 	CEdit m_port; // 端口
 	CEdit m_com1; // 串口
+	CComboBox m_type; // 单位
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	CComboBox m_user; // 用户
 	CEdit m_pwd; // 密码
