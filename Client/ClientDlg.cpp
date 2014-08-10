@@ -1515,12 +1515,13 @@ void CClientDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	NM_LISTVIEW* pNMListView = (NM_LISTVIEW*)pNMHDR;
 	int nItem = pNMListView->iItem;  // 这就是双击的item的序号
 //	int nSubItem = pNMListView->iSubItem; // 这是对应的子项号
-	CString sText = m_list.GetItemText(nItem, 0);
+	CString sText = m_list.GetItemText(nItem, 0); // 取得这行第一列的值
+	if(sText.Compare(L"")==0) return; // 如果单号为空，则返回不处理
 	m_list.ModifyStyle(NULL, LVS_SHOWSELALWAYS, 0);
 	m_list.SetItemState(nItem, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
 	m_id.SetWindowText(sText); // 设置单号
 	OnBnClickedButtonGet(); // 获得单据信息
-	m_dayin.EnableWindow(TRUE); // 开启“打印”按钮
+//	m_dayin.EnableWindow(TRUE); // 开启“打印”按钮
 	*pResult = 0;
 }
 
@@ -1694,7 +1695,7 @@ size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 			strcpy_s(client->bill.MiDu,cJSON_GetObjectItem(jsonroot,"md")->valuestring); // 密度
 			strcpy_s(client->bill.JinE,cJSON_GetObjectItem(jsonroot,"je")->valuestring); // 金额
 			strcpy_s(client->bill.YuE,cJSON_GetObjectItem(jsonroot,"ye")->valuestring); // 余额
-			strcpy_s(client->bill.BeiZhu,UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"bz")->valuestring)); // 货物 // 备注，需要改php
+			strcpy_s(client->bill.BeiZhu,UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"bz")->valuestring)); // 备注
 			strcpy_s(client->bill.GuoBang1,cJSON_GetObjectItem(jsonroot,"gb1")->valuestring); // 过磅1时间
 			strcpy_s(client->bill.GuoBang2,cJSON_GetObjectItem(jsonroot,"gb2")->valuestring); // 过磅2时间
 			strcpy_s(client->bill.ChuChang,cJSON_GetObjectItem(jsonroot,"cc")->valuestring); // 出场时间
