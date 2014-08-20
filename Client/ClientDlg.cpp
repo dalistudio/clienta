@@ -984,6 +984,12 @@ void CClientDlg::OnBnClickedButtonTijiao()
 		strBeiZhu += L"惠 ";
 	}
 
+	// 判断值是否为空，并处理
+	if(strJinE.Compare(L"")==0)
+	{
+		strJinE = "0";
+	}
+
 	// 设置 bill 结构
 	strcpy(bill.DanHao,W2A(strDanHao)); // 单号
 	strcpy(bill.CheHao,W2A(strCheHao)); // 车号
