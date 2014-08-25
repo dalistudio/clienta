@@ -1759,6 +1759,7 @@ size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
 		strMsg.Format(L"提交失败：\n%s",A2W(str));
 		client->MessageBox(strMsg,L"提交",MB_ICONHAND);
 		client->m_tijiao.EnableWindow(TRUE);
+		return size*nmemb; // 提交失败直接返回，防止启用打印按钮
 	}
 
 	client->m_dayin.EnableWindow(TRUE);
