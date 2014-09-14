@@ -176,6 +176,7 @@ BOOL CClientDlg::OnInitDialog()
 	// 
 	CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
+	strCheLiang = new char[1*1024*1024]; // ∑÷≈‰ƒ⁄¥Ê 1MB ø’º‰
 	memset(strCheLiang,0,1*1024*1024);
 	PosCheLiang=0;
 
