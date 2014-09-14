@@ -163,7 +163,7 @@ public:
 
 	void OnCheLiang(); // 车辆在场请求 
 	void ShowBill(); // 显示单据的数据
-	char strCheLiang[16*1024]; // 在场车辆信息的数据
+	char strCheLiang[1*1024*1024]; // 在场车辆信息的数据(1MB)
 	int  PosCheLiang; // 在场车辆信息数据的位置
 
 	// Date Time Ctrl

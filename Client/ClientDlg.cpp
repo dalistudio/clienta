@@ -176,7 +176,7 @@ BOOL CClientDlg::OnInitDialog()
 	// 
 	CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
-	memset(strCheLiang,0,16*1024);
+	memset(strCheLiang,0,1*1024*1024);
 	PosCheLiang=0;
 
 	// Date Time Ctrl 报表时间控件
@@ -1836,7 +1836,7 @@ void CClientDlg::OnCheLiang()
 {
 	if(m_isLogin == 1) // 判断是否登陆成功
 	{
-		memset(strCheLiang,0,16*1024);
+		memset(strCheLiang,0,1*1024*1024);
 		PosCheLiang=0;
 		char url[256]={0};
 		strcat_s(url,"http://");
