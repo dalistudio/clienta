@@ -1018,7 +1018,8 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	}
 	else if(m_post_id==2)// 第二次提交
 	{
-		if(strJingZhong.IsEmpty()||strJingZhong.Compare(L"0")==0)
+//		if(strJingZhong.IsEmpty()||strJingZhong.Compare(L"0")==0)
+		if(strMaoZhong.IsEmpty()||strMaoZhong.Compare(L"0")==0)
 		{
 			MessageBox(L"\"净重\"不能为0或空，检查地磅线路等是否正常！",L"地磅",MB_ICONASTERISK);
 			return;
