@@ -1126,7 +1126,7 @@ void CClientDlg::OnBnClickedButtonGet()
 			m_gaidan.EnableWindow(TRUE); // 启用改单按钮
 		}
 
-		if(strcmp(bill.ZhuangTai,"1")==0) // 如果已经第二次提交，则禁止再提交数据。
+		if(strcmp(bill.ZhuangTai,"1")==0 || strcmp(bill.ZhuangTai,"2")==0) // 如果已经第二次或者第三次提交，则禁止再提交数据。
 		{
 			m_chehao.EnableWindow(FALSE); // 禁用车号
 			m_chexing.EnableWindow(FALSE); // 禁用车型
