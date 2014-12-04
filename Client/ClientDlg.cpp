@@ -208,6 +208,7 @@ BOOL CClientDlg::OnInitDialog()
 	// 默认配置
 	m_tijiao.EnableWindow(FALSE); // 禁用“提交”按钮
 	m_dayin.EnableWindow(FALSE); // 禁用“打印”按钮
+	GetDlgItem(IDC_BUTTON_QUXIAO)->EnableWindow(FALSE); // 禁用“取消按钮”
 
 	memset(&conf,0,sizeof(CONF));
 	strcpy_s(conf.title,"海南港口文峰石场");
@@ -876,6 +877,7 @@ void CClientDlg::OnBnClickedButtonLogin()
 		else
 		{
 			m_isLogin = 1; // 登陆成功
+			GetDlgItem(IDC_BUTTON_QUXIAO)->EnableWindow(TRUE); // 启用“取消按钮”
 
 			// 处理用户名文件 user.dat
 			FILE *f;
