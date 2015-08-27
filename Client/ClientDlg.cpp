@@ -1733,6 +1733,7 @@ size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
 
 	char str[16]={0};
 	memcpy(str,ptr,5);
+
 	// 这里判断提交是否成功
 	if(strcmp(str,"post1")==0)
 	{
@@ -1752,6 +1753,26 @@ size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
 		client->m_tijiao.EnableWindow(FALSE);
 	}
 
+	//
+	// 客户拉的货物没有价格的错误提示 JiaGe
+	//
+	if(strcmp(str,"JiaGe")==0)
+	{
+		client->MessageBox(L"客户拉的货物与规格的价格没有设置，请联系管理员。",L"错误提示",MB_ICONHAND);
+		client->m_tijiao.EnableWindow(TRUE);
+		return size*nmemb; // 提交失败直接返回，防止启用打印按钮
+	}
+
+	//
+	// 客户信用额度用完提示 Credit
+	//
+	if(strcmp(str,"Credi")==0)
+	{
+		client->MessageBox(L"客户的信用额度已用完，请交费，并联系管理员。",L"错误提示",MB_ICONHAND);
+		client->m_tijiao.EnableWindow(TRUE);
+		return size*nmemb; // 提交失败直接返回，防止启用打印按钮
+	}
+
 	if(strcmp(str,"ERROR")==0)
 	{
 		char str[512] ={0};
@@ -1761,12 +1782,12 @@ size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
 		str[511] = 0x00;
 		CString strMsg;
 		strMsg.Format(L"提交失败：\n%s",A2W(str));
-		client->MessageBox(strMsg,L"提交",MB_ICONHAND);
+		client->MessageBox(strMsg,L"错误提示",MB_ICONHAND);
 		client->m_tijiao.EnableWindow(TRUE);
 		return size*nmemb; // 提交失败直接返回，防止启用打印按钮
 	}
 
-	client->m_dayin.EnableWindow(TRUE);
+	client->m_dayin.EnableWindow(TRUE); // 开启打印按钮
 	return size*nmemb;
 }
 
