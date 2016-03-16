@@ -457,7 +457,7 @@ BOOL CClientDlg::OnInitDialog()
 	m_list.InsertColumn(7,L"皮重",LVCFMT_RIGHT,100);
 	m_list.InsertColumn(8,L"第1次过磅时间",LVCFMT_CENTER,180);
 	m_list.InsertColumn(9,L"过磅次数",LVCFMT_CENTER,80);
-	
+
 	//return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 	return FALSE;
 }
@@ -764,9 +764,15 @@ BOOL CClientDlg::PreTranslateMessage(MSG* pMsg)
 					CString strCheHao;
 					m_chehao.GetWindowText(strCheHao);
 
+					// 转换端口为字符串
+					char strPort[6]={0};
+					itoa(conf.port,(char*)strPort,10);
+
 					char url[256]={0};
 					strcat_s(url,"http://");
 					strcat_s(url,conf.ip);
+					strcat_s(url,":");
+					strcat_s(url,strPort); // 端口
 					strcat_s(url,"/");
 					strcat_s(url,"getchehao.php");
 					strcat_s(url,"?");
@@ -834,9 +840,15 @@ void CClientDlg::OnBnClickedButtonLogin()
 	m_user.GetWindowText(strUser); // 获得用户名
 	m_pwd.GetWindowText(strPasswd); // 获得密码
 
+	// 转换端口为字符串
+	char strPort[6]={0};
+	itoa(conf.port,(char*)strPort,10);
+
 	char url[256]={0};
 	strcat_s(url,"http://");
 	strcat_s(url,conf.ip);
+	strcat_s(url,":");
+	strcat_s(url,strPort); // 端口
 	strcat_s(url,"/");
 	strcat_s(url,"login.php");
 	strcat_s(url,"?");
@@ -851,7 +863,7 @@ void CClientDlg::OnBnClickedButtonLogin()
 	CURLcode res;
 	
 	curl_easy_setopt(curl,CURLOPT_URL,url);
-	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5); // 如果5秒内无法连接，则直接退出。
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10); // 如果5秒内无法连接，则直接退出。
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, login_data);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
 	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,"");
@@ -1045,9 +1057,15 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	sprintf_s(data,"%sBeiZhu=%s&",data,W2A(strBeiZhu)); // 备注信息
 	sprintf_s(data,"%sSiBangYuan=%s",data, W2A(strUser)); // 司磅员
 
+	// 转换端口为字符串
+	char strPort[6]={0};
+	itoa(conf.port,(char*)strPort,10);
+
 	char url[256]={0};
 	strcat_s(url,"http://");
 	strcat_s(url,conf.ip);
+	strcat_s(url,":");
+	strcat_s(url,strPort); // 端口
 	strcat_s(url,"/");
 	strcat_s(url,"post.php");
 
@@ -1097,9 +1115,15 @@ void CClientDlg::OnBnClickedButtonGet()
 		m_post_id = 2; // 根据单号查单据
 	}
 
+	// 转换端口为字符串
+	char strPort[6]={0};
+	itoa(conf.port,(char*)strPort,10);
+
 	char url[256]={0};
 	strcat_s(url,"http://");
 	strcat_s(url,conf.ip);
+	strcat_s(url,":");
+	strcat_s(url,strPort); // 端口
 	strcat_s(url,"/");
 	strcat_s(url,"getid.php");
 	strcat_s(url,"?");
@@ -1347,9 +1371,15 @@ void CClientDlg::OnBnClickedButtonJiaojie()
 	FILE *fp;
 	fopen_s(&fp,W2A(strFileName),"wb"); // 保存文件及位置
 
+	// 转换端口为字符串
+	char strPort[6]={0};
+	itoa(conf.port,(char*)strPort,10);
+
 	char url[256]={0};
 	strcat_s(url,"http://");
 	strcat_s(url,conf.ip);
+	strcat_s(url,":");
+	strcat_s(url,strPort); // 端口
 	strcat_s(url,"/");
 	strcat_s(url,"Report_Excel.php");
 
@@ -1418,9 +1448,15 @@ void CClientDlg::OnCbnSelchangeComboHuowu()
 	int pos = m_huowu.GetCurSel(); // 获得当前选项的序号
 	m_huowu.GetLBText(pos,strHuoWu); // 获得指定序号的文字
 
+	// 转换端口为字符串
+	char strPort[6]={0};
+	itoa(conf.port,(char*)strPort,10);
+
 	char url[256]={0};
 	strcat_s(url,"http://");
 	strcat_s(url,conf.ip);
+	strcat_s(url,":");
+	strcat_s(url,strPort); // 端口
 	strcat_s(url,"/");
 	strcat_s(url,"getguige.php");
 	strcat_s(url,"?");
@@ -1863,9 +1899,16 @@ void CClientDlg::OnCheLiang()
 	{
 		memset(strCheLiang,0,1*1024*1024);
 		PosCheLiang=0;
+
+		// 转换端口为字符串
+		char strPort[6]={0};
+		itoa(conf.port,(char*)strPort,10);
+
 		char url[256]={0};
 		strcat_s(url,"http://");
 		strcat_s(url,conf.ip);
+		strcat_s(url,":");
+		strcat_s(url,strPort); // 端口
 		strcat_s(url,"/");
 		strcat_s(url,"keepalive.php");
 
