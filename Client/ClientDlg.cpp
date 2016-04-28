@@ -1282,6 +1282,10 @@ void CClientDlg::DoPrint()
 		m_printer->m_User = A2W(bill.SiBangYuan); // 司磅员
 		m_printer->m_Times = m_post_id; // 提交次数
 		m_printer->m_Type = atoi(bill.Type); // 支付类型
+		///////////////////////////
+		// 新增内容
+		m_printer->m_ZhuangTai = atoi(bill.ZhuangTai); // 磅单状态
+		m_printer->m_GuoBang2 = A2W(bill.GuoBang2); // 第二次过磅时间
 		memset(&bill,0,sizeof(BILL));
 
 		if(m_printer->StartPrinting()) // 开始打印

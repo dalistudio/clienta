@@ -132,7 +132,15 @@ void CPrinter::PrintBody()
 		// 如果磅单状态为第二次过磅或放行
 		if(m_ZhuangTai >= 1)
 		{
-			strDateTime.Format(L"时间：%s",m_GuoBang2); // 从数据库取得二次过磅时间
+			// 车辆二次过磅，当时未出厂时，时间为空
+			if(m_GuoBang2.IsEmpty())
+			{
+				strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
+			}
+			else // 二次过磅，已出厂
+			{
+				strDateTime.Format(L"时间：%s",m_GuoBang2); // 从数据库取得二次过磅时间
+			}	
 		}
 		else
 		{
