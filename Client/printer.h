@@ -46,7 +46,10 @@ public:
 	CString m_User; // 司磅员
 	int m_Times; // 过磅次数
 	int m_Type; // 支持类型
-
+	///////////////////////
+	/// 新增内容
+	CString m_GuoBang2; //第二次过磅时间
+	int m_ZhuangTai; // 磅单状态
 
 	void PreparePrinting();	//设置字体，根据dc计算一些参数
 	BOOL StartPrinting();

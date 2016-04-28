@@ -129,7 +129,15 @@ void CPrinter::PrintBody()
 		CString strDateTime;
 		GetLocalTime(&st);
 
-		strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
+		// 如果磅单状态为第二次过磅或放行
+		if(m_ZhuangTai >= 1)
+		{
+			strDateTime.Format(L"时间：%s",m_GuoBang2); // 从数据库取得二次过磅时间
+		}
+		else
+		{
+			strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
+		}
 		m_dc->TextOut(60,150,strDateTime);
 
 		strDateTime.Format(L"电话：%s",m_DianHua);

@@ -709,7 +709,8 @@ void CClientDlg::CalcJinE()
 			else // 四舍
 				a=(a/10)*10; // 舍去个位,乘于十倍
 			/////////////////////////////
-			JinE.Format(_T("%d"),a);
+//			JinE.Format(_T("%d"),a);
+			JinE.Format(_T("%d.00"),a); // 保留小数点后两位
 		}
 		else // 预付款或月售
 		{
@@ -873,6 +874,7 @@ void CClientDlg::OnBnClickedButtonLogin()
 	{
 		struct curl_slist *cookies = NULL;
 		curl_easy_getinfo(curl,CURLINFO_COOKIELIST,&cookies);
+/*
 		if(cookies == NULL)
 		{
 			MessageBox(L"登陆失败！\n未返回Cookie数据。",L"登陆",MB_ICONHAND);
@@ -887,6 +889,7 @@ void CClientDlg::OnBnClickedButtonLogin()
 			return; // 退出
 		}
 		else
+*/
 		{
 			m_isLogin = 1; // 登陆成功
 			GetDlgItem(IDC_BUTTON_QUXIAO)->EnableWindow(TRUE); // 启用“取消按钮”
@@ -1210,6 +1213,10 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_printer->m_User = A2W(bill.SiBangYuan); // 司磅员
 	m_printer->m_Times = m_post_id; // 提交次数
 	m_printer->m_Type = atoi(bill.Type); // 支付类型
+	///////////////////////////
+	// 新增内容
+	m_printer->m_ZhuangTai = atoi(bill.ZhuangTai); // 磅单状态
+	m_printer->m_GuoBang2 = A2W(bill.GuoBang2); // 第二次过磅时间
 	
 	return TRUE;
 }
@@ -1632,38 +1639,41 @@ size_t CClientDlg::login_data(void *ptr, size_t size, size_t nmemb, void *userp)
 		// 获取货物名称和规格
 		CList<CString ,CString> list; // 链表
 		cJSON *type = cJSON_GetObjectItem(jsonroot,"type");
-		cJSON *next = type->child; // type的子项
-		while(next->next != NULL) // type的下一项为空
+		if(type)
 		{
-			char * strHuoWu = next->string; // 货物名称
-//			char * strGuiGe = next->valuestring; // 货物规格
-			next = next->next; // 移动到type的下一项
-			//printf("HuoWu:%s = GuiGe:%s\n",UTF8ToEncode(strHuoWu),UTF8ToEncode(strGuiGe));
-			if(list.IsEmpty()) // 如果链表为空
+			cJSON *next = type->child; // type的子项
+			while(next->next != NULL) // type的下一项为空
 			{
-				list.AddTail(A2CW(UTF8ToEncode(strHuoWu))); // 添加到链表尾
-				client->m_huowu.AddString(A2CW(UTF8ToEncode(strHuoWu)));
-			}
-			else // 否则循环是否相同
-			{
-				POSITION pos = list.GetHeadPosition(); // 获得链表的头位置
-				CString pstr1 = A2CW(UTF8ToEncode(strHuoWu));
-				CString pstr2;
-				int isa = 0;
-				while(pos != NULL)   
-				{   
-					pstr2 = list.GetNext(pos); // 获得内容
-					if(pstr1.Compare(pstr2)==0)
-					{
-						isa = 1;
-					}
-				}
-				if(isa==0)
+				char * strHuoWu = next->string; // 货物名称
+//				char * strGuiGe = next->valuestring; // 货物规格
+				next = next->next; // 移动到type的下一项
+				//printf("HuoWu:%s = GuiGe:%s\n",UTF8ToEncode(strHuoWu),UTF8ToEncode(strGuiGe));
+				if(list.IsEmpty()) // 如果链表为空
 				{
-					list.AddTail(pstr1); // 添加到链表尾
-					client->m_huowu.AddString(pstr1);
+					list.AddTail(A2CW(UTF8ToEncode(strHuoWu))); // 添加到链表尾
+					client->m_huowu.AddString(A2CW(UTF8ToEncode(strHuoWu)));
 				}
+				else // 否则循环是否相同
+				{
+					POSITION pos = list.GetHeadPosition(); // 获得链表的头位置
+					CString pstr1 = A2CW(UTF8ToEncode(strHuoWu));
+					CString pstr2;
+					int isa = 0;
+					while(pos != NULL)   
+					{   
+						pstr2 = list.GetNext(pos); // 获得内容
+						if(pstr1.Compare(pstr2)==0)
+						{
+							isa = 1;
+						}
+					}
+					if(isa==0)
+					{
+						list.AddTail(pstr1); // 添加到链表尾
+						client->m_huowu.AddString(pstr1);
+					}
 						
+				}
 			}
 		}
 		client->m_huowu.SetCurSel(0); // 货物名称选择第一个项		
@@ -1671,12 +1681,15 @@ size_t CClientDlg::login_data(void *ptr, size_t size, size_t nmemb, void *userp)
 		// 获取客户名称
 		client->m_danwei.ResetContent(); // 清空客户控件中的所有项
 		cJSON *member = cJSON_GetObjectItem(jsonroot,"member");
-		int size = cJSON_GetArraySize(member); // 获得数组的长度
-		for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
+		if(member)
 		{
-			cJSON* node;
-			node = cJSON_GetArrayItem(member,i);
-			client->m_danwei.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加会员名称到单位控件下
+			int size = cJSON_GetArraySize(member); // 获得数组的长度
+			for(int i=0;i<size-1;i++) // 循环所有元素，排除最后一个
+			{
+				cJSON* node;
+				node = cJSON_GetArrayItem(member,i);
+				client->m_danwei.AddString(A2CW(UTF8ToEncode(node->valuestring))); // 添加会员名称到单位控件下
+			}
 		}
 		client->m_danwei.SetCurSel(0);
 	}
@@ -1795,6 +1808,16 @@ size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
 	if(strcmp(str,"JiaGe")==0)
 	{
 		client->MessageBox(L"客户拉的货物与规格的价格没有设置，请联系管理员。",L"错误提示",MB_ICONHAND);
+		client->m_tijiao.EnableWindow(TRUE);
+		return size*nmemb; // 提交失败直接返回，防止启用打印按钮
+	}
+
+	//
+	// 客户例如黑名单 
+	//
+	if(strcmp(str,"Black")==0)
+	{
+		client->MessageBox(L"客户已列入黑名单，请联系管理员。",L"错误提示",MB_ICONHAND);
 		client->m_tijiao.EnableWindow(TRUE);
 		return size*nmemb; // 提交失败直接返回，防止启用打印按钮
 	}
