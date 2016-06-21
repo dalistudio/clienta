@@ -920,7 +920,6 @@ void CClientDlg::OnBnClickedButtonLogin()
 				}
 				fclose(f); // 关闭文件
 			}
-
 			
 		}
 		OnCbnSelchangeComboHuowu(); // 获得货物对应的规格数据
@@ -1456,6 +1455,7 @@ void CClientDlg::OnCbnSelchangeComboHuowu()
 	USES_CONVERSION;
 	CString strHuoWu; 
 
+// TODO: 2015-05-11 如果获取不到货物，则出错
 	int pos = m_huowu.GetCurSel(); // 获得当前选项的序号
 	m_huowu.GetLBText(pos,strHuoWu); // 获得指定序号的文字
 
@@ -1674,7 +1674,7 @@ size_t CClientDlg::login_data(void *ptr, size_t size, size_t nmemb, void *userp)
 					if(isa==0)
 					{
 						list.AddTail(pstr1); // 添加到链表尾
-						client->m_huowu.AddString(pstr1);
+						client->m_huowu.AddString(pstr1); // 添加货物列表
 					}
 						
 				}
@@ -1804,6 +1804,30 @@ size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
 	{
 		client->MessageBox(L"改单成功！",L"提交",MB_ICONASTERISK);
 		client->m_tijiao.EnableWindow(FALSE);
+	}
+
+	// 一次过磅时，警告额度
+	if(strcmp(str,"JingG")==0)
+	{
+		char str[512] ={0};
+		char * temp = (char*)ptr;
+		temp+=8;
+		memcpy(str,(void*)temp,size*nmemb);
+		str[511] = 0x00;
+		CString strMsg;
+		strMsg.Format(L"余额不足，是否要出单：\n%s",A2W(str));
+
+		int res = client->MessageBox(strMsg,L"提交",MB_YESNO|MB_ICONQUESTION);
+		if(res==IDYES)
+		{
+			// 禁止提交按钮
+			client->m_tijiao.EnableWindow(FALSE);
+		}else
+		{
+			// 不出单，禁止打印按钮
+			client->m_dayin.EnableWindow(FALSE);
+		}
+		
 	}
 
 	//
