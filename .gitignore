@@ -17,3 +17,5 @@ debug
 release
 *.opensdf
 *.dat
+*.db
+*.opendb

@@ -65,4 +65,7 @@ void CPreviewPrintView::OnPreviewPrint()
 	CPrintFrame* pf=(CPrintFrame*)::AfxGetMainWnd();
 	pf->PostMessage(WM_MODAL_PRINT,0,0);
 	OnPreviewClose();               // force close of Preview
+
+//	CClientDlg *pDlg = (CClientDlg *)GetParent()->GetParent();
+//	pDlg->OnBnClickedButtonQuxiao();
 }
