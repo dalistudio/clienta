@@ -129,23 +129,27 @@ void CPrinter::PrintBody()
 		CString strDateTime;
 		GetLocalTime(&st);
 
-		// 如果磅单状态为第二次过磅或放行
-		if(m_ZhuangTai >= 1)
-		{
-			// 车辆二次过磅，当时未出厂时，时间为空
-			if(m_GuoBang2.IsEmpty())
-			{
-				strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
-			}
-			else // 二次过磅，已出厂
-			{
-				strDateTime.Format(L"时间：%s",m_GuoBang2); // 从数据库取得二次过磅时间
-			}	
-		}
-		else
-		{
+// 屏蔽代码，所有打印都输出当前电脑时间
+//
+//		// 如果磅单状态为第二次过磅或放行
+//		if(m_ZhuangTai >= 1)
+//		{
+//			// 车辆二次过磅，当时未出厂时，时间为空
+//			if(m_GuoBang2.IsEmpty())
+//			{
+//				strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
+//			}
+//			else // 二次过磅，已出厂
+//			{
+//				strDateTime.Format(L"时间：%s",m_GuoBang2); // 从数据库取得二次过磅时间
+//			}	
+//		}
+//		else
+//		{
 			strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
-		}
+//		}
+//
+// 屏蔽结束
 		m_dc->TextOut(60,150,strDateTime);
 
 		strDateTime.Format(L"电话：%s",m_DianHua);
