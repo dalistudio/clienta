@@ -1215,6 +1215,7 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	///////////////////////////
 	// 新增内容
 	m_printer->m_ZhuangTai = atoi(bill.ZhuangTai); // 磅单状态
+	m_printer->m_GuoBang1 = A2W(bill.GuoBang1); // 第一次过磅时间
 	m_printer->m_GuoBang2 = A2W(bill.GuoBang2); // 第二次过磅时间
 	
 	return TRUE;
@@ -1284,6 +1285,7 @@ void CClientDlg::DoPrint()
 		///////////////////////////
 		// 新增内容
 		m_printer->m_ZhuangTai = atoi(bill.ZhuangTai); // 磅单状态
+		m_printer->m_GuoBang1 = A2W(bill.GuoBang1); // 第一次过磅时间
 		m_printer->m_GuoBang2 = A2W(bill.GuoBang2); // 第二次过磅时间
 		memset(&bill,0,sizeof(BILL));
 
@@ -1457,6 +1459,11 @@ void CClientDlg::OnCbnSelchangeComboHuowu()
 
 // TODO: 2015-05-11 如果获取不到货物，则出错
 	int pos = m_huowu.GetCurSel(); // 获得当前选项的序号
+	if(pos < 0)
+	{
+		MessageBox(L"无法获取到货物数据，请联系管理员！！！",L"错误",MB_ICONASTERISK);
+		return;
+	}
 	m_huowu.GetLBText(pos,strHuoWu); // 获得指定序号的文字
 
 	// 转换端口为字符串
@@ -1787,21 +1794,31 @@ size_t CClientDlg::post_data(void *ptr, size_t size, size_t nmemb, void *userp)
 	char str[16]={0};
 	memcpy(str,ptr,5);
 
+	char date[20]={0};
+	void *p = (char*)ptr+6;
+	memcpy(date,p,19);
+
 	// 这里判断提交是否成功
 	if(strcmp(str,"post1")==0)
 	{
+		// TODO:
+		// 解析返回字符串中的时间，并设置为BILL.GuoBang1的值。便于打印服务器时间。
+		// 
+		strcpy_s(client->bill.GuoBang1,date); // 设置第一次过磅服务器时间
 		client->MessageBox(L"第一次过磅提交成功！",L"提交",MB_ICONASTERISK);
 		client->m_tijiao.EnableWindow(FALSE);
 	}
 
 	if(strcmp(str,"post2")==0)
 	{
+		strcpy_s(client->bill.GuoBang2,date); // 设置第二次过磅服务器时间
 		client->MessageBox(L"第二次过磅提交成功！",L"提交",MB_ICONASTERISK);
 		client->m_tijiao.EnableWindow(FALSE);
 	}
 
 	if(strcmp(str,"post3")==0)
 	{
+		strcpy_s(client->bill.GuoBang1,date); // 设置第一次过磅服务器时间
 		client->MessageBox(L"改单成功！",L"提交",MB_ICONASTERISK);
 		client->m_tijiao.EnableWindow(FALSE);
 	}

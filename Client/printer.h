@@ -48,7 +48,8 @@ public:
 	int m_Type; // 支持类型
 	///////////////////////
 	/// 新增内容
-	CString m_GuoBang2; //第二次过磅时间
+	CString m_GuoBang1; // 第一次过磅时间
+	CString m_GuoBang2; // 第二次过磅时间
 	int m_ZhuangTai; // 磅单状态
 
 	void PreparePrinting();	//设置字体，根据dc计算一些参数
