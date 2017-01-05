@@ -133,25 +133,28 @@ void CPrinter::PrintBody()
 //		printf("第一次过磅时间：%s\n",m_GuoBang1);
 //		printf("第二次过磅时间：%s\n",m_GuoBang2);
 
+/*
 // 屏蔽旧代码
-//		// 如果磅单状态为第二次过磅或放行
-//		if(m_ZhuangTai >= 1)
-//		{
-//			// 车辆二次过磅，当时未出厂时，时间为空
-//			if(m_GuoBang2.IsEmpty())
-//			{
-//				strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
-//			}
-//			else // 二次过磅，已出厂
-//			{
-//				strDateTime.Format(L"时间：%s",m_GuoBang2); // 从数据库取得二次过磅时间
-//			}	
-//		}
-//		else
-//		{
-//			strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
-//		}
+		// 如果磅单状态为第二次过磅或放行
+		if(m_ZhuangTai >= 1)
+		{
+			// 车辆二次过磅，当时未出厂时，时间为空
+			if(m_GuoBang2.IsEmpty())
+			{
+				strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
+			}
+			else // 二次过磅，已出厂
+			{
+				strDateTime.Format(L"时间：%s",m_GuoBang2); // 从数据库取得二次过磅时间
+			}	
+		}
+		else
+		{
+			strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
+		}
 // 屏蔽结束
+*/
+
 
 		// 过磅次数
 		switch(m_Times)
@@ -163,7 +166,14 @@ void CPrinter::PrintBody()
 			}
 		case 2: // 第二次过磅
 			{
-				strDateTime.Format(L"时间：%s",m_GuoBang2); // 从数据库取得二次过磅时间
+				if(m_GuoBang2.IsEmpty())
+				{
+					strDateTime.Format(L"时间：%s",m_GuoBang1); // 补单，从数据库取得一次过磅时间
+				}
+				else
+				{
+					strDateTime.Format(L"时间：%s",m_GuoBang2); // 从数据库取得二次过磅时间
+				}
 				break;
 			}
 		case 3: // 第一次过磅改单
@@ -175,6 +185,7 @@ void CPrinter::PrintBody()
 			strDateTime.Format(L"当前：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
 		}
 
+
 		// 如果时间字段为空
 		if(strDateTime.IsEmpty())
 		{
@@ -182,12 +193,9 @@ void CPrinter::PrintBody()
 		}
 		m_dc->TextOut(60,150,strDateTime); // 时间
 
-// 屏蔽电话，改为显示当前打印时间
-//		strDateTime.Format(L"电话：%s",m_DianHua);
-//		m_dc->TextOut(500,150,strDateTime); // 电话
-		strDateTime.Format(L"打印：%02d%02d %02d%02d%02d",st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
-		m_dc->TextOut(500,150,strDateTime); // 当前打印时间
 
+		strDateTime.Format(L"电话：%s",m_DianHua);
+		m_dc->TextOut(500,150,strDateTime); // 电话
 
 		strDateTime.Format(L"单号：%s",m_id); // 单号
 		m_dc->TextOut(800,150,strDateTime); // 单号
@@ -327,6 +335,9 @@ void CPrinter::PrintBody()
 //			m_dc->TextOut(600,500,CString("红：存根联"));
 //			m_dc->TextOut(1000,500,CString("绿：客户联"));
 //		}
+//		strDateTime.Format(L"%02d%02d %02d%02d%02d",st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
+//		m_dc->TextOut(60,500,strDateTime); // 当前打印时间
+
 
 		// 条形码
 		USES_CONVERSION;
