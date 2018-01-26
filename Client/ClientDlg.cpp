@@ -367,6 +367,9 @@ BOOL CClientDlg::OnInitDialog()
 	GetDlgItem(IDC_STATIC_YUE)->SetFont(m_Font);
 	GetDlgItem(IDC_STATIC_YEY)->SetFont(m_Font);
 
+	// 限重单位 v1.6
+	GetDlgItem(IDC_STATIC_XZKG)->SetFont(m_Font);
+
 	// 皮重单位
 	GetDlgItem(IDC_STATIC_PZKG)->SetFont(m_Font);
 
@@ -384,6 +387,10 @@ BOOL CClientDlg::OnInitDialog()
 	// 车型
 	GetDlgItem(IDC_STATIC_CHEXING)->SetFont(m_Font);
 	GetDlgItem(IDC_COMBO_CHEXING)->SetFont(m_Font);
+
+	// 限重 v1.6
+	GetDlgItem(IDC_STATIC_XIANZHONG)->SetFont(m_Font);
+	GetDlgItem(IDC_EDIT_XIANZHONG)->SetFont(m_Font);
 
 	// 皮重
 	GetDlgItem(IDC_STATIC_PIZHONG)->SetFont(m_Font);
@@ -1042,42 +1049,53 @@ void CClientDlg::OnBnClickedButtonTijiao()
 		}
 	}
 
-	char data[1024]={0};
-	sprintf_s(data,"DanHao=%s&",W2A(strDanHao)); // 单号
-	sprintf_s(data,"%sCheHao=%s&",data,W2A(strCheHao)); // 车号
-	sprintf_s(data,"%sCheXing=%s&",data,W2A(strCheXing)); // 车型
-	sprintf_s(data,"%sDanWei=%s&",data,W2A(strDanWei)); // 单位
-//	sprintf_s(data,"%sDianHua=%s&",data,W2A(strDianHua)); // 电话
-	sprintf_s(data,"%sHuoWu=%s&",data,W2A(strHuoWu)); // 货物
-	sprintf_s(data,"%sGuiGe=%s&",data,W2A(strGuiGe)); // 规格
-	sprintf_s(data,"%sPiZhong=%s&",data,W2A(strPiZhong)); //皮重
-	sprintf_s(data,"%sMaoZhong=%s&",data,W2A(strMaoZhong)); // 毛重
-	sprintf_s(data,"%sJiangZhong=%s&",data,W2A(strJingZhong)); // 净重
-	sprintf_s(data,"%sDanJia=%s&",data,W2A(strDanJia)); // 单价  
-	sprintf_s(data,"%sJinE=%s&",data,W2A(strJinE)); // 金额
-	sprintf_s(data,"%sZhuangTai=%d&",data,m_post_id); // 状态
-	sprintf_s(data,"%sBeiZhu=%s&",data,W2A(strBeiZhu)); // 备注信息
-	sprintf_s(data,"%sSiBangYuan=%s",data, W2A(strUser)); // 司磅员
+	if(m_post_id == 0)
+	{
+		// 如果 m_post_id == 0， 提交的状态也为0，接下来的二次过磅或者出厂处理都会出错，
+		// 所以禁止提交，并重新输入数据提交。
+		MessageBox(L"数据异常，请重新提交。",L"地磅",MB_ICONASTERISK);
+		OnBnClickedButtonQuxiao(); // 清空界面数据，重新输入单号。
+		return;
+	}
+	else
+	{
+		char data[1024]={0};
+		sprintf_s(data,"DanHao=%s&",W2A(strDanHao)); // 单号
+		sprintf_s(data,"%sCheHao=%s&",data,W2A(strCheHao)); // 车号
+		sprintf_s(data,"%sCheXing=%s&",data,W2A(strCheXing)); // 车型
+		sprintf_s(data,"%sDanWei=%s&",data,W2A(strDanWei)); // 单位
+//		sprintf_s(data,"%sDianHua=%s&",data,W2A(strDianHua)); // 电话
+		sprintf_s(data,"%sHuoWu=%s&",data,W2A(strHuoWu)); // 货物
+		sprintf_s(data,"%sGuiGe=%s&",data,W2A(strGuiGe)); // 规格
+		sprintf_s(data,"%sPiZhong=%s&",data,W2A(strPiZhong)); //皮重
+		sprintf_s(data,"%sMaoZhong=%s&",data,W2A(strMaoZhong)); // 毛重
+		sprintf_s(data,"%sJiangZhong=%s&",data,W2A(strJingZhong)); // 净重
+		sprintf_s(data,"%sDanJia=%s&",data,W2A(strDanJia)); // 单价  
+		sprintf_s(data,"%sJinE=%s&",data,W2A(strJinE)); // 金额
+		sprintf_s(data,"%sZhuangTai=%d&",data,m_post_id); // 状态 : TODO：这里提交的状态有可能为0，应作处理
+		sprintf_s(data,"%sBeiZhu=%s&",data,W2A(strBeiZhu)); // 备注信息
+		sprintf_s(data,"%sSiBangYuan=%s",data, W2A(strUser)); // 司磅员
 
-	// 转换端口为字符串
-	char strPort[6]={0};
-	itoa(conf.port,(char*)strPort,10);
+		// 转换端口为字符串
+		char strPort[6]={0};
+		itoa(conf.port,(char*)strPort,10);
 
-	char url[256]={0};
-	strcat_s(url,"http://");
-	strcat_s(url,conf.ip);
-	strcat_s(url,":");
-	strcat_s(url,strPort); // 端口
-	strcat_s(url,"/");
-	strcat_s(url,"post.php");
+		char url[256]={0};
+		strcat_s(url,"http://");
+		strcat_s(url,conf.ip);
+		strcat_s(url,":");
+		strcat_s(url,strPort); // 端口
+		strcat_s(url,"/");
+		strcat_s(url,"post.php");
 
-	CURLcode res;
-	curl_easy_setopt(curl,CURLOPT_URL,url);
-	curl_easy_setopt(curl, CURLOPT_POST, 1L);  
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data); // POST 的数据
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, post_data); // 提交返回的数据
-	curl_easy_setopt( curl, CURLOPT_WRITEDATA, this ); 
-	res = curl_easy_perform(curl);
+		CURLcode res;
+		curl_easy_setopt(curl,CURLOPT_URL,url);
+		curl_easy_setopt(curl, CURLOPT_POST, 1L);  
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data); // POST 的数据
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, post_data); // 提交返回的数据
+		curl_easy_setopt( curl, CURLOPT_WRITEDATA, this ); 
+		res = curl_easy_perform(curl);
+	}
 
 	// 获得车辆在场信息
 	OnCheLiang();
