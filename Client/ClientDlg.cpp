@@ -103,6 +103,7 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHESHU, m_CheShu); // 在场车数
 	DDX_Control(pDX, IDC_DATE_START, m_Date_Start); // 开始时间
 	DDX_Control(pDX, IDC_DATE_END, m_Date_End); // 结束时间
+	DDX_Control(pDX, IDC_EDIT_XIANZHONG, m_xianzhong);
 }
 
 BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
@@ -378,6 +379,9 @@ BOOL CClientDlg::OnInitDialog()
 
 	// 净重单位
 	GetDlgItem(IDC_STATIC_JZKG)->SetFont(m_Font);
+
+	// 单价单位
+	GetDlgItem(IDC_STATIC_Dun)->SetFont(m_Font);
 
 	// 金额单位
 	GetDlgItem(IDC_STATIC_JE)->SetFont(m_Font);
@@ -1165,6 +1169,7 @@ void CClientDlg::OnBnClickedButtonGet()
 		{
 			m_chehao.EnableWindow(FALSE); // 禁用车号
 			m_chexing.EnableWindow(FALSE); // 禁用车型
+			m_xianzhong.EnableWindow(FALSE); // 禁用限重
 			m_huowu.EnableWindow(FALSE); // 禁用货物
 			m_guige.EnableWindow(FALSE); // 禁用规格
 			m_danwei.EnableWindow(FALSE); // 禁用单位
@@ -1176,6 +1181,7 @@ void CClientDlg::OnBnClickedButtonGet()
 		{
 			m_chehao.EnableWindow(FALSE); // 禁用车号
 			m_chexing.EnableWindow(FALSE); // 禁用车型
+			m_xianzhong.EnableWindow(FALSE); // 禁用限重
 			m_huowu.EnableWindow(FALSE); // 禁用货物
 			m_guige.EnableWindow(FALSE); // 禁用规格
 			m_danwei.EnableWindow(FALSE); // 禁用单位
@@ -1623,6 +1629,7 @@ void CClientDlg::OnBnClickedButtonQuxiao()
 	m_pizhong.EnableWindow(FALSE); // 皮重
 	m_maozhong.EnableWindow(FALSE); // 毛重
 	m_jingzhong.EnableWindow(FALSE); // 净重
+	m_xianzhong.EnableWindow(FALSE); // 限重 v1.6
 	m_danjia.EnableWindow(FALSE); // 单价
 	m_jine.EnableWindow(FALSE); // 金额
 
@@ -1753,6 +1760,7 @@ size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 			client->m_id.EnableWindow(FALSE); // 禁止“单号”输入框
 			client->m_chehao.EnableWindow(TRUE); // 开启“车号”输入框
 			client->m_chexing.EnableWindow(TRUE); // 开启“车型”输入框
+			client->m_xianzhong.EnableWindow(TRUE); //开启“限重”输入框
 			client->m_danwei.EnableWindow(TRUE); // 开启“收获”输入框
 			client->m_huowu.EnableWindow(TRUE); // 开启“货物”输入框
 			client->m_guige.EnableWindow(TRUE); // 开启“规格”输入框
@@ -2109,6 +2117,7 @@ void CClientDlg::OnBnClickedButtonGaidan()
 	m_post_id = 3; // 修改第一次单
 	m_chehao.EnableWindow(TRUE); // 启用车号
 	m_chexing.EnableWindow(TRUE); // 启用车型
+	m_xianzhong.EnableWindow(TRUE); // 启用限重
 	m_huowu.EnableWindow(TRUE); // 启用货物
 	m_guige.EnableWindow(TRUE); // 启用规格
 	m_danwei.EnableWindow(TRUE); // 启用单位

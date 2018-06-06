@@ -104,8 +104,9 @@ void CPrinter::PrintHeader()
 	int nPosY,nPosX;
 	nPosY = 40;//m_page_v_margin-(3*m_line_height)/2;
 	nPosX = 300;//m_page_h_margin;
-	
-	m_dc->TextOut(nPosX,nPosY,m_title+L"过磅单"); // 标题+过磅单
+
+// 屏蔽20180606	
+//	m_dc->TextOut(nPosX,nPosY,m_title+L"过磅单"); // 标题+过磅单
 
 	m_dc->SelectObject(old_font);
 	fontHeader.DeleteObject();
@@ -132,28 +133,6 @@ void CPrinter::PrintBody()
 
 //		printf("第一次过磅时间：%s\n",m_GuoBang1);
 //		printf("第二次过磅时间：%s\n",m_GuoBang2);
-
-/*
-// 屏蔽旧代码
-		// 如果磅单状态为第二次过磅或放行
-		if(m_ZhuangTai >= 1)
-		{
-			// 车辆二次过磅，当时未出厂时，时间为空
-			if(m_GuoBang2.IsEmpty())
-			{
-				strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
-			}
-			else // 二次过磅，已出厂
-			{
-				strDateTime.Format(L"时间：%s",m_GuoBang2); // 从数据库取得二次过磅时间
-			}	
-		}
-		else
-		{
-			strDateTime.Format(L"时间：%4d-%02d-%02d %02d:%02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
-		}
-// 屏蔽结束
-*/
 
 
 		// 过磅次数
@@ -235,6 +214,8 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(80,207,CString("车号"));
 		m_dc->TextOut(395,207,m_CheHao);
 
+		// 屏蔽20180606
+		/*
 		m_dc->TextOut(730,207,CString("皮重"));
 		if(m_PiZhong.IsEmpty() || m_PiZhong==L"0")
 		{
@@ -245,11 +226,15 @@ void CPrinter::PrintBody()
 		{
 			m_dc->TextOut(1065,207,m_PiZhong+L" KG");
 		}
+		*/
 
 		// 第二行
 		m_dc->TextOut(80,207+40,CString("车型"));
-		m_dc->TextOut(395,207+40,m_CheXing);
+		// 屏蔽20180606
+		// m_dc->TextOut(395,207+40,m_CheXing);
 
+		// 屏蔽20180606
+		/*
 		m_dc->TextOut(730,207+40,CString("毛重"));
 		if(m_MaoZhong.IsEmpty() || m_MaoZhong==L"0")
 		{
@@ -260,11 +245,14 @@ void CPrinter::PrintBody()
 		{
 			m_dc->TextOut(1065,207+40,m_MaoZhong+L" KG");
 		}
+		*/
 
 		// 第三行
 		m_dc->TextOut(80,207+80,CString("客户")); // 由单位名称改为客户
 		m_dc->TextOut(395,207+80,m_DanWei);
 
+		// 屏蔽20180606
+		/*
 		m_dc->TextOut(730,207+80,CString("净重"));
 		if(m_JingZhong.IsEmpty() || m_JingZhong==L"0")
 		{
@@ -275,11 +263,14 @@ void CPrinter::PrintBody()
 		{
 			m_dc->TextOut(1065,207+80,m_JingZhong+L" KG");
 		}
+		*/
 
 		// 第四行
 		m_dc->TextOut(80,207+120,CString("货物"));
 		m_dc->TextOut(395,207+120,m_HuoWu);
 
+		// 屏蔽20180606
+		/*
 		if(m_Type==0) // 只有零售才打印单价
 		{
 			m_dc->TextOut(730,207+120,CString("单价"));
@@ -293,12 +284,14 @@ void CPrinter::PrintBody()
 				m_dc->TextOut(1065,207+120,m_DanJia+L" 元/"+ m_DanJiaDanWei);
 			}
 		}
-		
+		*/
 
 		// 第五行
 		m_dc->TextOut(80,207+160,CString("规格"));
 		m_dc->TextOut(395,207+160,m_GuiGe);
 
+		// 屏蔽20180606
+		/*
 		if(m_Type==0) // 只有零售才打印金额
 		{
 			m_dc->TextOut(730,207+160,CString("金额"));
@@ -312,32 +305,19 @@ void CPrinter::PrintBody()
 				m_dc->TextOut(1065,207+160,m_JinE+L" 元");
 			}
 		}
-		
+		*/
 
 		// 第六行
 		m_dc->TextOut(80,207+200,CString("备注："));
-		m_dc->TextOut(200,207+200,m_BeiZhu);
+		// 屏蔽20180606
+		//m_dc->TextOut(200,207+200,m_BeiZhu);
 
 		// 页脚
 		strDateTime.Format(L"司磅员：%s",m_User);
 		m_dc->TextOut(60,450,strDateTime);
-		m_dc->TextOut(600,450,CString("客户签名："));
+// 屏蔽20180606
+//		m_dc->TextOut(600,450,CString("客户签名："));
 		m_dc->TextOut(1000,450,CString("司机签名："));
-
-//		if(m_Times==1) // 第一次过磅
-//		{
-//			m_dc->TextOut(60,500,CString("白：存根联"));
-//			m_dc->TextOut(375,500,CString("红：进料联"));
-//		}
-//		if(m_Times==2) // 第二次过磅
-//		{
-//			m_dc->TextOut(60,500,CString("白：保安联"));
-//			m_dc->TextOut(600,500,CString("红：存根联"));
-//			m_dc->TextOut(1000,500,CString("绿：客户联"));
-//		}
-//		strDateTime.Format(L"%02d%02d %02d%02d%02d",st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
-//		m_dc->TextOut(60,500,strDateTime); // 当前打印时间
-
 
 		// 条形码
 		USES_CONVERSION;

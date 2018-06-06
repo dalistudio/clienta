@@ -173,4 +173,6 @@ public:
 	afx_msg void OnBnClickedButton5(); // 获得在场车辆信息
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnBnClickedButtonGaidan();
+	// 限重
+	CComboBox m_xianzhong;
 };
