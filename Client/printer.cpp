@@ -251,9 +251,8 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(80,207+80,CString("客户")); // 由单位名称改为客户
 		m_dc->TextOut(395,207+80,m_DanWei);
 
-		// 屏蔽20180606
-		/*
-		m_dc->TextOut(730,207+80,CString("净重"));
+		// 净重
+		m_dc->TextOut(730,207+80,CString("JZ"));
 		if(m_JingZhong.IsEmpty() || m_JingZhong==L"0")
 		{
 			m_JingZhong = L"";
@@ -263,7 +262,6 @@ void CPrinter::PrintBody()
 		{
 			m_dc->TextOut(1065,207+80,m_JingZhong+L" KG");
 		}
-		*/
 
 		// 第四行
 		m_dc->TextOut(80,207+120,CString("货物"));
