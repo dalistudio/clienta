@@ -288,8 +288,6 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(80,207+160,CString("规格"));
 		m_dc->TextOut(395,207+160,m_GuiGe);
 
-		// 屏蔽20180606
-		/*
 		if(m_Type==0) // 只有零售才打印金额
 		{
 			m_dc->TextOut(730,207+160,CString("金额"));
@@ -303,7 +301,7 @@ void CPrinter::PrintBody()
 				m_dc->TextOut(1065,207+160,m_JinE+L" 元");
 			}
 		}
-		*/
+		
 
 		// 第六行
 		m_dc->TextOut(80,207+200,CString("备注："));
