@@ -214,38 +214,47 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(80,207,CString("车号"));
 		m_dc->TextOut(395,207,m_CheHao);
 
-		// 屏蔽20180606
-		/*
-		m_dc->TextOut(730,207,CString("皮重"));
-		if(m_PiZhong.IsEmpty() || m_PiZhong==L"0")
+		// 2018-06-14 进料类型显示皮重
+		if(m_Type==3) // 进料类型
 		{
-			m_PiZhong = L"";
-			m_dc->TextOut(1065,207,m_PiZhong);
+			m_dc->TextOut(730,207,CString("皮重"));
+			if(m_PiZhong.IsEmpty() || m_PiZhong==L"0")
+			{
+				m_PiZhong = L"";
+				m_dc->TextOut(1065,207,m_PiZhong);
+			}
+			else
+			{
+				m_dc->TextOut(1065,207,m_PiZhong+L" KG");
+			}
 		}
-		else
-		{
-			m_dc->TextOut(1065,207,m_PiZhong+L" KG");
-		}
-		*/
+		
+		
 
 		// 第二行
 		m_dc->TextOut(80,207+40,CString("车型"));
-		// 屏蔽20180606
-		// m_dc->TextOut(395,207+40,m_CheXing);
+		
+		if(m_Type==3) // 进料类型
+		{
+			m_dc->TextOut(395,207+40,m_CheXing); // 显示车型
+		}
+		
 
-		// 屏蔽20180606
-		/*
-		m_dc->TextOut(730,207+40,CString("毛重"));
-		if(m_MaoZhong.IsEmpty() || m_MaoZhong==L"0")
+		if(m_Type==3) // 进料类型
 		{
-			m_MaoZhong = L"";
-			m_dc->TextOut(1065,207+40,m_MaoZhong);
+			m_dc->TextOut(730,207+40,CString("毛重"));
+			if(m_MaoZhong.IsEmpty() || m_MaoZhong==L"0")
+			{
+				m_MaoZhong = L"";
+				m_dc->TextOut(1065,207+40,m_MaoZhong);
+			}
+			else
+			{
+				m_dc->TextOut(1065,207+40,m_MaoZhong+L" KG");
+			}
 		}
-		else
-		{
-			m_dc->TextOut(1065,207+40,m_MaoZhong+L" KG");
-		}
-		*/
+		
+		
 
 		// 第三行
 		m_dc->TextOut(80,207+80,CString("客户")); // 由单位名称改为客户
@@ -267,8 +276,7 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(80,207+120,CString("货物"));
 		m_dc->TextOut(395,207+120,m_HuoWu);
 
-		// 屏蔽20180606
-		/*
+		
 		if(m_Type==0) // 只有零售才打印单价
 		{
 			m_dc->TextOut(730,207+120,CString("单价"));
@@ -282,7 +290,7 @@ void CPrinter::PrintBody()
 				m_dc->TextOut(1065,207+120,m_DanJia+L" 元/"+ m_DanJiaDanWei);
 			}
 		}
-		*/
+		
 
 		// 第五行
 		m_dc->TextOut(80,207+160,CString("规格"));
@@ -305,8 +313,11 @@ void CPrinter::PrintBody()
 
 		// 第六行
 		m_dc->TextOut(80,207+200,CString("备注："));
-		// 屏蔽20180606
-		//m_dc->TextOut(200,207+200,m_BeiZhu);
+		if(m_Type==3) // 进料类型
+		{
+			m_dc->TextOut(200,207+200,m_BeiZhu); // 备注内容
+		}
+		
 
 		// 页脚
 		strDateTime.Format(L"司磅员：%s",m_User);
