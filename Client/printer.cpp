@@ -214,10 +214,11 @@ void CPrinter::PrintBody()
 		m_dc->TextOut(80,207,CString("车号"));
 		m_dc->TextOut(395,207,m_CheHao);
 
+		// 2018-03-30 修改皮重显示为PZ,并屏蔽进料类型的判断
 		// 2018-06-14 进料类型显示皮重
-		if(m_Type==3) // 进料类型
+//		if(m_Type==3) // 进料类型
 		{
-			m_dc->TextOut(730,207,CString("皮重"));
+			m_dc->TextOut(730,207,CString("PZ"));
 			if(m_PiZhong.IsEmpty() || m_PiZhong==L"0")
 			{
 				m_PiZhong = L"";
