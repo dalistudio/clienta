@@ -103,7 +103,7 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHESHU, m_CheShu); // 在场车数
 	DDX_Control(pDX, IDC_DATE_START, m_Date_Start); // 开始时间
 	DDX_Control(pDX, IDC_DATE_END, m_Date_End); // 结束时间
-	DDX_Control(pDX, IDC_EDIT_XIANZHONG, m_xianzhong);
+	DDX_Control(pDX, IDC_EDIT_XIANZHONG, m_xianzhong); // 限重
 }
 
 BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
