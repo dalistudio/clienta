@@ -66,6 +66,7 @@ public:
 
 	int m_post_id; // 提交的编号，用于区分不同提交。
 	int m_isLogin; // 是否登陆
+	int m_limit_flag; // 是否启用/禁用限重模块 限重v1.7.1
 
 	unsigned char m_dibang_data[32]; // 地磅数据
 	int m_dibang_data_pos; // 地磅数据的位置

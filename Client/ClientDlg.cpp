@@ -191,6 +191,7 @@ BOOL CClientDlg::OnInitDialog()
 	memset(m_dibang_data,0,32); // 清空地磅数据
 	m_dibang_data_pos = 0; // 地磅数据的位置
 	m_Start = 0; // 是否开始收集地磅数据
+	m_limit_flag = 0; // 限重 v1.7.1
 	iWeight1 = 0;
 	iWeight2 = 0;
 
@@ -321,10 +322,10 @@ BOOL CClientDlg::OnInitDialog()
 		FF_SWISS,				// 字符间距和字体族
 		_T("隶书"));				// 字体名称
 
-		// 实时重量的字体
-		CFont *m_Font2;
-		m_Font2 = new CFont; 
-		m_Font2->CreateFont(
+	// 实时重量的字体
+	CFont *m_Font2;
+	m_Font2 = new CFont; 
+	m_Font2->CreateFont(
 		60, // 字体高度
 		25,	// 字体宽度
 		0,	// 文本行的倾斜度
@@ -1093,6 +1094,48 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	}
 	else
 	{
+		//
+		// 判断如果为第二次并且限重功能开启，则判断限重和毛重，超重直接返回。
+		//
+		if(m_post_id==2) // 第二次提交
+		{
+			if(m_limit_flag==1) // 开启限重功能
+			{
+				CString axle,type,weight,temp;
+				int n = 0;
+				n = strXianZhong.Find(L",");
+				axle = strXianZhong.Left(n); // 获取车轴数
+
+				int len = 0;
+				len = strXianZhong.Delete(0,n+1);
+				temp = strXianZhong.Right(len);
+				n = temp.Find(L",");
+				type = temp.Left(n); // 获取车类型
+
+				temp.Delete(0,n+1);
+				n = temp.Find(L"T");
+				weight = temp.Left(n); // 获取限重(吨)
+
+				int limit_weight = 0;
+				limit_weight = _ttoi(weight); // CString 转 int 
+				limit_weight *= 1000; // 转换为吨数
+
+				int mao_zhong = 0;
+				CString MZ(bill.MaoZhong);
+				mao_zhong = _ttoi(MZ); // CString 转 int 
+
+				if(mao_zhong >= limit_weight)
+				{
+					CString msg;
+					msg.Format(L"车辆超载，禁止打印磅单。\n毛重：%d 大约或等于 限重：%d",mao_zhong,limit_weight);
+					MessageBox(msg,L"超载提示",MB_ICONHAND);
+
+					OnBnClickedButtonQuxiao(); // 调用“取消”按钮
+					return;
+				}
+			}
+		}
+
 		char data[1024]={0};
 		sprintf_s(data,"DanHao=%s&",W2A(strDanHao)); // 单号
 		sprintf_s(data,"%sCheHao=%s&",data,W2A(strCheHao)); // 车号
@@ -1790,12 +1833,14 @@ size_t CClientDlg::limit_data(void *ptr, size_t size, size_t nmemb, void *userp)
 			if(flag->valueint==0)
 			{
 				// 隐藏限重控件和静态文本框
+				client->m_limit_flag = 0;
 				client->GetDlgItem(IDC_STATIC_XIANZHONG)->ShowWindow(SW_HIDE);
 				client->GetDlgItem(IDC_EDIT_XIANZHONG)->ShowWindow(SW_HIDE);
 			}
 			else
 			{
 				// 显示限重控件和静态文本框
+				client->m_limit_flag = 1;
 				client->GetDlgItem(IDC_STATIC_XIANZHONG)->ShowWindow(SW_SHOW);
 				client->GetDlgItem(IDC_EDIT_XIANZHONG)->ShowWindow(SW_SHOW);
 
@@ -1812,7 +1857,7 @@ size_t CClientDlg::limit_data(void *ptr, size_t size, size_t nmemb, void *userp)
 					char * weight = cJSON_GetObjectItem( pSub , "weight")->valuestring ;
 					//printf("axle: %s  type: %s	weight: %s",axle,type,weight);
 					char tmp[32] = {0};
-					sprintf_s(tmp,"%s %s %sT",axle,type,weight); // 限重显示文本格式
+					sprintf_s(tmp,"%s,%s,%sT",axle,type,weight); // 限重显示文本格式
 					client->m_xianzhong.AddString(A2CW(UTF8ToEncode(tmp))); // 添加限重信息到控件下
 				}
 				client->m_xianzhong.SetCurSel(0);
