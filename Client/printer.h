@@ -36,6 +36,7 @@ public:
 	CString m_DianHua; // 电话
 	CString m_HuoWu; // 货物名称
 	CString m_GuiGe; // 货物规格
+	CString m_XianZhong; // 限重 v1.7.1
 	CString m_PiZhong; // 皮重
 	CString m_MaoZhong; // 毛重
 	CString m_JingZhong; // 净重

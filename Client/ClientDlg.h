@@ -45,6 +45,7 @@ public:
 		char DianHua[16]; // 电话
 		char HuoWu[32]; // 货物名称
 		char GuiGe[16]; // 货物规格
+		char XianZhong[16]; // 限重 v1.7.1
 		char PiZhong[16]; // 皮重
 		char MaoZhong[16]; // 毛重
 		char JingZhong[16]; // 净重
@@ -154,6 +155,7 @@ public:
 	// CURL 
 	CURL *curl;
 	static size_t login_data(void *ptr, size_t size, size_t nmemb, void *userp); // 登陆返回数据
+	static size_t limit_data(void *ptr, size_t size, size_t nmemb, void *userp); // 限重返回数据
 	static size_t getid_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得单号返回数据
 	static size_t post_data(void *ptr, size_t size, size_t nmemb, void *userp); // 提交数据返回数据
 	static size_t guige_data(void *ptr, size_t size, size_t nmemb, void *userp); // 获得规格返回数据
@@ -175,4 +177,6 @@ public:
 	afx_msg void OnBnClickedButtonGaidan();
 	// 限重
 	CComboBox m_xianzhong;
+	afx_msg void OnEnChangeEditChehao();
+	afx_msg void OnLvnItemchangedList1(NMHDR *pNMHDR, LRESULT *pResult);
 };

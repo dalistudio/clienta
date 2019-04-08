@@ -134,6 +134,8 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON5, &CClientDlg::OnBnClickedButton5)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON_GAIDAN, &CClientDlg::OnBnClickedButtonGaidan)
+	ON_EN_CHANGE(IDC_EDIT_CHEHAO, &CClientDlg::OnEnChangeEditChehao)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, &CClientDlg::OnLvnItemchangedList1)
 END_MESSAGE_MAP()
 
 
@@ -220,10 +222,16 @@ BOOL CClientDlg::OnInitDialog()
 
 	// 打开配置文件 JSON 格式
 	FILE *f;
-	fopen_s(&f,"config","rb"); // 配置文件 config
+	fopen_s(&f,"config.json","rb"); // 配置文件 config
 	if(f==NULL)
 	{
-		MessageBox(_T("打开配置文件失败！"), _T("config"), MB_ICONHAND);
+		MessageBox(_T("未发现配置文件config.json，将创建默认配置文件。\n请修改为正确参数。"), _T("config"), MB_ICONHAND);
+		FILE *wf;
+		wf=fopen("config.json","wt");
+		char *str="{\"title\":\"海南港口文峰石场\",\"server\":{\"ip\":\"192.168.1.5\",\"port\":80},\"com\":{\"port\":1,\"para\":\"9600,N,8,1\"},\"path\":\"d:\\\\\"}";
+		int len = strlen(str);
+		fwrite(str,len,1,wf);
+		fclose(wf);
 	}
 	else
 	{
@@ -939,6 +947,26 @@ void CClientDlg::OnBnClickedButtonLogin()
 	{
 		MessageBox(L"连接服务器超时，请检查服务器地址和端口是否正确。",L"连接",MB_ICONHAND);
 	}
+
+	// 限重
+	memset(&url,0,256);
+	strcat_s(url,"http://");
+	strcat_s(url,conf.ip);
+	strcat_s(url,":");
+	strcat_s(url,strPort); // 端口
+	strcat_s(url,"/");
+	strcat_s(url,"getlimit.php");
+	
+	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10); // 如果5秒内无法连接，则直接退出。
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, limit_data);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
+	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,"");
+	res = curl_easy_perform(curl);
+
+	if(res==CURLE_OK) // 返回成功
+	{
+	}
 }
 
 // 登出
@@ -983,7 +1011,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	CString strDanHao,strCheHao,strCheXing; // 单号，车号，车型
 	CString strDanWei,strDianHua; // 单位，电话
 	CString strHuoWu,strGuiGe; // 货物，规格
-	CString strPiZhong,strMaoZhong,strJingZhong; // 皮重，毛重，净重
+	CString strXianZhong,strPiZhong,strMaoZhong,strJingZhong; // 限重，皮重，毛重，净重 v1.7.1
 	CString strDanJia,strJinE; // 单价，金额
 	CString strBeiZhu; // 备注信息
 	CString strUser; // 司磅员
@@ -995,6 +1023,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	m_dianhua.GetWindowText(strDianHua); // 电话
 	m_huowu.GetWindowText(strHuoWu); // 货物
 	m_guige.GetWindowText(strGuiGe); // 规格
+	m_xianzhong.GetWindowText(strXianZhong); // 限重 v1.7.1
 	m_pizhong.GetWindowText(strPiZhong); // 皮重
 	m_maozhong.GetWindowText(strMaoZhong); // 毛重
 	m_jingzhong.GetWindowText(strJingZhong); // 净重
@@ -1026,6 +1055,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 	strcpy(bill.DianHua,W2A(strDianHua)); // 电话
 	strcpy(bill.HuoWu,W2A(strHuoWu)); // 货物名称
 	strcpy(bill.GuiGe,W2A(strGuiGe)); // 货物规格
+	strcpy(bill.XianZhong,W2A(strXianZhong)); // 限重 v1.7.1
 	strcpy(bill.PiZhong,W2A(strPiZhong)); // 皮重
 	strcpy(bill.MaoZhong,W2A(strMaoZhong)); // 毛重
 	strcpy(bill.JingZhong,W2A(strJingZhong)); // 净重
@@ -1071,6 +1101,7 @@ void CClientDlg::OnBnClickedButtonTijiao()
 //		sprintf_s(data,"%sDianHua=%s&",data,W2A(strDianHua)); // 电话
 		sprintf_s(data,"%sHuoWu=%s&",data,W2A(strHuoWu)); // 货物
 		sprintf_s(data,"%sGuiGe=%s&",data,W2A(strGuiGe)); // 规格
+		sprintf_s(data,"%sXianZhong=%s&",data,W2A(strXianZhong)); // 限重 v1.7.1
 		sprintf_s(data,"%sPiZhong=%s&",data,W2A(strPiZhong)); //皮重
 		sprintf_s(data,"%sMaoZhong=%s&",data,W2A(strMaoZhong)); // 毛重
 		sprintf_s(data,"%sJiangZhong=%s&",data,W2A(strJingZhong)); // 净重
@@ -1226,6 +1257,7 @@ LRESULT CClientDlg::OnBeginPrinting(WPARAM wParam,LPARAM lParam)
 	m_printer->m_DianHua = A2W(bill.DianHua); // 电话
 	m_printer->m_HuoWu = A2W(bill.HuoWu); // 货物
 	m_printer->m_GuiGe = A2W(bill.GuiGe); // 规格
+	m_printer->m_XianZhong = A2W(bill.XianZhong); // 限重 v1.7.1
 	m_printer->m_PiZhong = A2W(bill.PiZhong); // 皮重
 	m_printer->m_MaoZhong = A2W(bill.MaoZhong); // 毛重
 	m_printer->m_JingZhong= A2W(bill.JingZhong); // 净重
@@ -1296,6 +1328,7 @@ void CClientDlg::DoPrint()
 		m_printer->m_DianHua = A2W(bill.DianHua); // 电话
 		m_printer->m_HuoWu = A2W(bill.HuoWu); // 货物
 		m_printer->m_GuiGe = A2W(bill.GuiGe); // 规格
+		m_printer->m_XianZhong = A2W(bill.XianZhong); // 限重 v1.7.1
 		m_printer->m_PiZhong = A2W(bill.PiZhong); // 皮重
 		m_printer->m_MaoZhong = A2W(bill.MaoZhong); // 毛重
 		m_printer->m_JingZhong= A2W(bill.JingZhong); // 净重
@@ -1740,6 +1773,55 @@ size_t CClientDlg::login_data(void *ptr, size_t size, size_t nmemb, void *userp)
 	return size*nmemb;
 }
 
+// 限重返回数据
+size_t CClientDlg::limit_data(void *ptr, size_t size, size_t nmemb, void *userp)
+{
+	
+	CClientDlg *client =(CClientDlg*)userp;
+	USES_CONVERSION;
+
+	cJSON *jsonroot = cJSON_Parse((const char*)ptr); //json根
+	if(jsonroot)
+	{
+		cJSON *flag = cJSON_GetObjectItem(jsonroot,"limit_flag");
+		if(flag)
+		{
+			// limit_flag: 0=禁用  1=启用
+			if(flag->valueint==0)
+			{
+				// 隐藏限重控件和静态文本框
+				client->GetDlgItem(IDC_STATIC_XIANZHONG)->ShowWindow(SW_HIDE);
+				client->GetDlgItem(IDC_EDIT_XIANZHONG)->ShowWindow(SW_HIDE);
+			}
+			else
+			{
+				// 显示限重控件和静态文本框
+				client->GetDlgItem(IDC_STATIC_XIANZHONG)->ShowWindow(SW_SHOW);
+				client->GetDlgItem(IDC_EDIT_XIANZHONG)->ShowWindow(SW_SHOW);
+
+				// 读取 limit_list 数组，并显示到下拉菜单。
+				cJSON *list = cJSON_GetObjectItem(jsonroot,"limit_list");
+				int  array_size   = cJSON_GetArraySize(list);
+				int i;
+				for(i=0;i<array_size-1;i++)
+				{
+					cJSON * pSub = cJSON_GetArrayItem(list,i);
+					if(NULL==pSub){continue;}
+					char * axle   = cJSON_GetObjectItem( pSub , "axle")->valuestring ;
+					char * type = cJSON_GetObjectItem( pSub , "type")->valuestring ;
+					char * weight = cJSON_GetObjectItem( pSub , "weight")->valuestring ;
+					//printf("axle: %s  type: %s	weight: %s",axle,type,weight);
+					char tmp[32] = {0};
+					sprintf_s(tmp,"%s %sT",axle,weight);
+					client->m_xianzhong.AddString(A2CW(UTF8ToEncode(tmp))); // 添加限重信息到控件下
+				}
+				client->m_xianzhong.SetCurSel(0);
+			}
+		}
+	}
+	return size*nmemb;
+}
+
 // 单号返回数据
 size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 {
@@ -1783,6 +1865,7 @@ size_t CClientDlg::getid_data(void *ptr, size_t size, size_t nmemb, void *userp)
 			strcpy_s(client->bill.DanWei,UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"dw")->valuestring)); // 单位
 			strcpy_s(client->bill.HuoWu,UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"hw")->valuestring)); // 货物
 			strcpy_s(client->bill.GuiGe,cJSON_GetObjectItem(jsonroot,"gg")->valuestring); // 规格
+			strcpy_s(client->bill.XianZhong,UTF8ToEncode(cJSON_GetObjectItem(jsonroot,"xz")->valuestring)); // 限重 v1.7.1
 			strcpy_s(client->bill.PiZhong,cJSON_GetObjectItem(jsonroot,"pz")->valuestring); // 皮重
 			strcpy_s(client->bill.MaoZhong,cJSON_GetObjectItem(jsonroot,"mz")->valuestring); // 毛重
 			strcpy_s(client->bill.JingZhong,cJSON_GetObjectItem(jsonroot,"jz")->valuestring); // 净重
@@ -1980,6 +2063,9 @@ size_t CClientDlg::chehao_data(void *ptr, size_t size, size_t nmemb, void *userp
 
 			node = cJSON_GetArrayItem(jsonroot,4);
 			client->m_guige.SetWindowText(A2CW(UTF8ToEncode(node->valuestring))); // 规格
+
+			node = cJSON_GetArrayItem(jsonroot,5);
+			client->m_xianzhong.SetWindowText(A2CW(UTF8ToEncode(node->valuestring))); // 限重 v1.7.1
 		}
 	}
 	cJSON_Delete(jsonroot);
@@ -2070,6 +2156,7 @@ void CClientDlg::ShowBill()
 	m_danwei.SetWindowText(A2CW(bill.DanWei)); // 单位
 	m_huowu.SetWindowText(A2CW(bill.HuoWu)); // 货物
 	m_guige.SetWindowText(A2CW(bill.GuiGe)); // 规格
+	m_xianzhong.SetWindowText(A2CW(bill.XianZhong)); // 限重 v1.7.1
 	m_pizhong.SetWindowText(A2CW(bill.PiZhong)); // 皮重
 	m_maozhong.SetWindowText(A2CW(bill.MaoZhong)); // 毛重
 	m_jingzhong.SetWindowText(A2CW(bill.JingZhong)); // 净重
@@ -2124,4 +2211,23 @@ void CClientDlg::OnBnClickedButtonGaidan()
 	m_dayin.EnableWindow(FALSE); // 禁用打印按钮
 
 	m_danjia.SetWindowText(L""); // 设置单价为空
+}
+
+
+void CClientDlg::OnEnChangeEditChehao()
+{
+	// TODO:  如果该控件是 RICHEDIT 控件，它将不
+	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
+	// 函数并调用 CRichEditCtrl().SetEventMask()，
+	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
+
+	// TODO:  在此添加控件通知处理程序代码
+}
+
+
+void CClientDlg::OnLvnItemchangedList1(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	*pResult = 0;
 }
