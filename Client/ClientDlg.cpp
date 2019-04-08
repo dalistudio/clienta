@@ -1812,7 +1812,7 @@ size_t CClientDlg::limit_data(void *ptr, size_t size, size_t nmemb, void *userp)
 					char * weight = cJSON_GetObjectItem( pSub , "weight")->valuestring ;
 					//printf("axle: %s  type: %s	weight: %s",axle,type,weight);
 					char tmp[32] = {0};
-					sprintf_s(tmp,"%s %sT",axle,weight);
+					sprintf_s(tmp,"%s %s %sT",axle,type,weight); // 限重显示文本格式
 					client->m_xianzhong.AddString(A2CW(UTF8ToEncode(tmp))); // 添加限重信息到控件下
 				}
 				client->m_xianzhong.SetCurSel(0);

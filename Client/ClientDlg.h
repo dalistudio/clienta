@@ -45,7 +45,7 @@ public:
 		char DianHua[16]; // 电话
 		char HuoWu[32]; // 货物名称
 		char GuiGe[16]; // 货物规格
-		char XianZhong[16]; // 限重 v1.7.1
+		char XianZhong[32]; // 限重 v1.7.1
 		char PiZhong[16]; // 皮重
 		char MaoZhong[16]; // 毛重
 		char JingZhong[16]; // 净重
