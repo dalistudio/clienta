@@ -30,7 +30,7 @@ public:
 	struct CONF{
 		char title[32]; // 标题
 		char ip[16]; // 地址
-		short port; // 端口
+		unsigned short port; // 端口
 		short com1_id; // 串口1的编号
 		char com1_para[64]; // 串口1的参数
 		char path[256]; // 报表保存路径
