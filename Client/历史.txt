@@ -1,3 +1,16 @@
+2024-10-25 ver 1.8.0
+1、项目从VS2010升级到VS2022
+2、修改CnCommunity.h 第92行代码为：
+   #define CN_ASSERT(E)	((E) ? true : CnComm::Assert(_T("CN_ASSERT(\")_T(#E)_T(\") failed; CnComm(\")CN_LINE(__LINE__)_T(\"); ")))
+3、需要引入低版本兼容链接库  项目 --> 属性 --> 链接器 --> 输入 --> 附加依赖项  --> legacy_stdio_definitions.lib
+4、项目 --> 属性 --> 链接器 --> 输入 --> 高级  --> 映像具有安全异常处理程序：否(/SAFESEH:NO)
+5、需要在 ClientDlg.cpp 中加入 extern "C" {FILE __iob_func[3]={*stdin, *stdout, *stderr};} 代码，为了兼容低版本
+6、取消引用cjson库，而是直接引入源代码
+7、添加64位版本
+8、更新 curl、cjson、zlib、png、zint库的版本
+9、需要添加 libnmingwex.a libgcc.a 库
+
+
 2019-04-09 ver 1.7.2
 1、修复IP地址端口值不能大于32767的问题
 

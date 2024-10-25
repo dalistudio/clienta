@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Client.cpp" />
+    <ClCompile Include="ClientDlg.cpp" />
+    <ClCompile Include="PreviewPrintView.cpp" />
+    <ClCompile Include="printer.cpp" />
+    <ClCompile Include="PrintFrame.cpp" />
+    <ClCompile Include="PrintView.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="uni2utf8.cpp" />
+    <ClCompile Include="..\cJSON-1.7.18\cJSON.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Client.h" />
+    <ClInclude Include="ClientDlg.h" />
+    <ClInclude Include="CnComm.h" />
+    <ClInclude Include="com_class.h" />
+    <ClInclude Include="PreviewPrintView.h" />
+    <ClInclude Include="printer.h" />
+    <ClInclude Include="PrintFrame.h" />
+    <ClInclude Include="PrintView.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="uni2utf8.h" />
+    <ClInclude Include="..\cJSON-1.7.18\cJSON.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Client.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="res\Client.ico" />
+    <None Include="res\Client.rc2" />
+    <None Include="历史.txt" />
+  </ItemGroup>
+</Project>

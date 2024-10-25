@@ -7,7 +7,7 @@
 #include "ClientDlg.h"
 #include "afxdialogex.h"
 #include "uni2utf8.h"
-#include "../cjson/cJSON.h"
+#include "../cJSON-1.7.18/cJSON.h"
 #include "PrintFrame.h"
 #include "PrintView.h"
 #include "printer.h"
@@ -18,6 +18,8 @@
 #define new DEBUG_NEW
 #endif
 
+// 从 VS2010 升级 VS2022 后兼容需要
+extern "C" {FILE __iob_func[3] = { *stdin, *stdout, *stderr }; }
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 

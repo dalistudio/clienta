@@ -19,3 +19,4 @@ release
 *.dat
 *.db
 *.opendb
+.vs/

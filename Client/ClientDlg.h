@@ -10,7 +10,7 @@
 #include "io.h"
 #include "printer.h"
 #include "Resource.h"
-#include "../curl/include/curl/curl.h"
+#include "../curl-8.10.1/include/curl/curl.h"
 
 // CClientDlg ¶Ô»°¿ò
 class CClientDlg : public CDialogEx

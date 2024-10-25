@@ -2,7 +2,7 @@
 #include "printer.h"
 #include "ClientDlg.h"
 #include <math.h>
-#include "../zint/zint.h"
+#include "../zint-2.13.0/zint.h"
 
 CPrinter::CPrinter(CDC * usedc)
 {
